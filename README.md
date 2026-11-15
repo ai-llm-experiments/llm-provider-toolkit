@@ -68,6 +68,23 @@ Files in `configs/` update daily at midnight UTC. Fetch them from GitHub or gene
 | [`litellm_config.yaml`](configs/litellm_config.yaml) | LiteLLM proxy config (all models) |
 | [`litellm_config_free.yaml`](configs/litellm_config_free.yaml) | LiteLLM proxy config (free models only) |
 
+### OmniRoute proposals
+
+The `llm_fallbacks.omniroute` module turns this catalog into reviewable,
+purpose-named OmniRoute combo proposals. It requires a separate access manifest
+with recent evidence for each exact model and provider: connection, zero-price
+dimensions, cost boundary, endpoint, privacy, and successful requests. Agent
+routes also require verified tool support. The [OmniRoute guide](docs/omniroute.md)
+describes the manifest and command. Keep credentials out of the manifest.
+
+The output is a proposal, not a deployment or a billing guarantee. The catalog's
+ranking measures advertised capabilities; it is not a benchmark or proof of
+access. Start with the empty [access manifest](configs/omniroute-access.example.json);
+it produces no routes until you add verified targets. Confirm runtime permissions,
+current pricing, privacy, and failover before importing a proposal. Long chains are
+bounded by the router's attempt and time limits, and the output reports eligible
+targets beyond the attempt budget.
+
 **Stable raw URLs:**
 
 ```
