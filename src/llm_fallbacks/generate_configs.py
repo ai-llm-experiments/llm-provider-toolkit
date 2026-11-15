@@ -78,6 +78,12 @@ def build_free_models_list(free_models: list[tuple[str, dict[str, Any]]]) -> lis
             "is_free": True,
             "input_cost_per_token": spec.get("input_cost_per_token", 0),
             "output_cost_per_token": spec.get("output_cost_per_token", 0),
+            "pricing_evidence": {
+                "source": "registry",
+                "input_cost_present": "input_cost_per_token" in spec,
+                "output_cost_present": "output_cost_per_token" in spec,
+                "requires_live_verification": True,
+            },
             "context_length": spec.get("max_input_tokens") or spec.get("max_tokens") or 0,
             "max_output_tokens": spec.get("max_output_tokens", 0),
             "supports_vision": bool(spec.get("supports_vision", False)),
