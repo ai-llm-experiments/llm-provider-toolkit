@@ -123,6 +123,22 @@ PROVIDER_CATALOGS = {
         "auto_fetch_models": False,
         "docs": "https://docs.tokenfactory.nebius.com/api-reference/models/list-models",
     },
+    "novita": {
+        "base_url": "https://api.novita.ai/v3/openai",
+        "models_url": "https://api.novita.ai/v3/openai/models",
+        "schema": "novita",
+        "auth_env": "NOVITA_API_KEY",
+        "auto_fetch_models": False,
+        "docs": "https://docs.novita.ai/api-reference/model-apis-llm-list-models",
+    },
+    "featherless": {
+        "base_url": "https://api.featherless.ai/v1",
+        "models_url": "https://api.featherless.ai/v1/models?all=true",
+        "schema": "featherless",
+        "auth_env": "FEATHERLESS_API_KEY",
+        "auto_fetch_models": False,
+        "docs": "https://featherless.ai/docs/api-reference-models",
+    },
     "chutes": {
         "base_url": "https://llm.chutes.ai/v1",
         "models_url": "https://llm.chutes.ai/v1/models",
@@ -329,22 +345,20 @@ def parse_provider_models(
         return _parse_together_models(response, qualify_ids=qualify_ids)
     if not isinstance(response, dict):
         raise ValueError("Provider response must be an object")
-    if schema == "mistral":
-        return _parse_mistral_models(response, qualify_ids=qualify_ids)
-    if schema == "cohere":
-        return _parse_cohere_models(response, qualify_ids=qualify_ids)
-    if schema == "fireworks":
-        return _parse_fireworks_models(response, qualify_ids=qualify_ids)
-    if schema == "sambanova":
-        return _parse_sambanova_models(response, qualify_ids=qualify_ids)
-    if schema == "nebius":
-        return _parse_nebius_models(response, qualify_ids=qualify_ids)
-    if schema == "chutes":
-        return _parse_chutes_models(response, qualify_ids=qualify_ids)
-    if schema == "deepseek":
-        return _parse_deepseek_models(response, qualify_ids=qualify_ids)
-    if schema == "opencode":
-        return _parse_opencode_models(response, qualify_ids=qualify_ids)
+    schema_parsers = {
+        "mistral": _parse_mistral_models,
+        "cohere": _parse_cohere_models,
+        "fireworks": _parse_fireworks_models,
+        "sambanova": _parse_sambanova_models,
+        "nebius": _parse_nebius_models,
+        "chutes": _parse_chutes_models,
+        "deepseek": _parse_deepseek_models,
+        "opencode": _parse_opencode_models,
+        "novita": _parse_novita_models,
+        "featherless": _parse_featherless_models,
+    }
+    if schema in schema_parsers:
+        return schema_parsers[schema](response, qualify_ids=qualify_ids)
     google = schema == "gemini"
     if not google:
         return parse_openai_models(provider, response, qualify_ids=qualify_ids)
@@ -561,7 +575,7 @@ def _parse_cohere_models(response: dict[str, Any], *, qualify_ids: bool) -> dict
 
 
 def _complete_catalog_rows(
-    response: dict[str, Any], field: str, total_field: str | None = None
+    response: dict[str, Any], field: str, total_field: str | None = None, *, max_rows: int = 20_000
 ) -> list[dict[str, Any]]:
     """Require one complete bounded snapshot, including any pagination markers."""
     links = response.get("links", {})
@@ -575,7 +589,7 @@ def _complete_catalog_rows(
     if links.get("next") or any(response.get(key) for key in ("nextPageToken", "next_page_token", "next", "has_more")):
         raise ValueError("Complete provider pagination before importing the snapshot")
     rows = response.get(field)
-    if not isinstance(rows, list) or len(rows) > 20_000 or not all(isinstance(row, dict) for row in rows):
+    if not isinstance(rows, list) or len(rows) > max_rows or not all(isinstance(row, dict) for row in rows):
         raise ValueError("Model response must contain a bounded object array")
     for total in (total_field, "total_count"):
         if total and total in response and (type(response[total]) is not int or response[total] != len(rows)):
@@ -857,6 +871,112 @@ def _parse_opencode_models(response: dict[str, Any], *, qualify_ids: bool) -> di
             "access_source": "https://opencode.ai/docs/console/api/inference",
         }
         key = f"opencode_zen/{name}" if qualify_ids else name
+        result[key] = spec
+    return result
+
+
+def _parse_novita_models(response: dict[str, Any], *, qualify_ids: bool) -> dict[str, dict[str, Any]]:
+    """Preserve Novita discovery without guessing integer or tiered price units."""
+    result = {}
+    seen: set[str] = set()
+    for row in _complete_catalog_rows(response, "data"):
+        name = _catalog_identity(row, "id", seen)
+        normalized = {"id": name, "architecture": _declared_modalities(row)}
+        spec = _openai_spec("novita", normalized)
+        # Current public rows have both integer quotes and decimal nested
+        # quotes. The model-list reference does not define their currency scale.
+        quotes = {
+            key: row[key]
+            for key in ("input_token_price_per_m", "output_token_price_per_m", "pricing", "is_tiered_billing")
+            if key in row
+        }
+        if "pricing" in row and row["pricing"] is not None and not isinstance(row["pricing"], dict):
+            raise ValueError("Novita pricing must be an object or unknown")
+        spec["pricing_evidence"]["reported_prices"] = quotes or None
+        spec["pricing_evidence"]["units_verified"] = False
+        context = _positive_integer(row.get("context_size"))
+        output = _positive_integer(row.get("max_output_tokens"))
+        if context:
+            spec["context_window"] = context
+        if output:
+            spec["max_output_tokens"] = output
+        features = row.get("features")
+        endpoints = row.get("endpoints")
+        if features is not None:
+            _string_array(features, "Novita features")
+        if endpoints is not None:
+            _string_array(endpoints, "Novita endpoints")
+        # Preserve provider declarations without inferring native protocol or
+        # account entitlement from a catalog's labels.
+        spec["catalog_evidence"] = {
+            "features": features,
+            "endpoints": endpoints,
+            "model_type": row.get("model_type"),
+            "status": row.get("status"),
+        }
+        key = f"novita/{name}" if qualify_ids else name
+        result[key] = spec
+    return result
+
+
+def _parse_featherless_models(response: dict[str, Any], *, qualify_ids: bool) -> dict[str, dict[str, Any]]:
+    """Read the complete active Featherless catalog, preserving plan uncertainty."""
+    result = {}
+    seen: set[str] = set()
+    # The documented all=true listing currently exceeds the generic 20k cap.
+    # Its own bound remains under the shared 16 MiB input envelope.
+    for row in _complete_catalog_rows(response, "data", max_rows=50_000):
+        name = _catalog_identity(row, "id", seen)
+        status = row.get("status")
+        if status is not None and status not in ("active", "pending_deploy", "not_deployed"):
+            raise ValueError("Unknown Featherless model lifecycle status")
+        for flag in ("is_gated", "available_on_current_plan", "vision_supported"):
+            if flag in row and type(row[flag]) is not bool:
+                raise ValueError("Featherless model flags must be booleans")
+        if status in ("pending_deploy", "not_deployed") or row.get("available_on_current_plan") is False:
+            continue
+        normalized = {"id": name, "architecture": _declared_modalities(row)}
+        if "pricing" in row:
+            prices = row["pricing"]
+            if prices is not None and not isinstance(prices, dict):
+                raise ValueError("Featherless pricing must be an object or unknown")
+            normalized["pricing"] = prices
+        spec = _openai_spec("featherless", normalized)
+        if "vision_supported" in row:
+            if spec.get("supports_vision") is True and row["vision_supported"] is False:
+                raise ValueError("Conflicting Featherless vision declarations")
+            spec["supports_vision"] = row["vision_supported"]
+        features = row.get("features", {})
+        if not isinstance(features, dict):
+            raise ValueError("Featherless features must be an object")
+        for source, destination in (("tool_use", "supports_function_calling"), ("image_input", "supports_vision")):
+            if source in features:
+                if type(features[source]) is not bool:
+                    raise ValueError("Featherless feature declarations must be booleans")
+                if destination in spec and spec[destination] != features[source]:
+                    raise ValueError("Conflicting Featherless feature declarations")
+                spec[destination] = features[source]
+        context = _positive_integer(row.get("context_length"))
+        output = _positive_integer(row.get("max_completion_tokens"))
+        if context:
+            spec["context_window"] = context
+        if output:
+            spec["max_output_tokens"] = output
+        concurrency = row.get("concurrency_cost")
+        if concurrency is not None and not _positive_integer(concurrency):
+            raise ValueError("Featherless concurrency cost must be a positive integer")
+        tasks = row.get("tasks")
+        if tasks is not None:
+            _string_array(tasks, "Featherless tasks")
+        spec["catalog_evidence"] = {
+            "status": status,
+            "is_gated": row.get("is_gated"),
+            "available_on_current_plan": row.get("available_on_current_plan"),
+            "model_class": row.get("model_class"),
+            "concurrency_cost": concurrency,
+            "tasks": tasks,
+        }
+        key = f"featherless/{name}" if qualify_ids else name
         result[key] = spec
     return result
 
