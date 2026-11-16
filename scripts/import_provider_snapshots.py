@@ -228,7 +228,9 @@ def build_unmapped(manifest, evidence, repository, as_of, *, snapshot_cache=None
             reasons = []
             if not pricing.has_explicit_zero_cost(spec):
                 reasons.append('complete-explicit-zero-pricing-unverified')
-            if model in ('openrouter/free', 'openrouter/auto'):
+            if not routing.is_exact_target(model):
+                reasons.append("model-target-syntax-not-exact")
+            if routing.is_dynamic_router(provider, model):
                 reasons.append('dynamic-router-policy-unbounded')
             dispositions.append({'provider': provider, 'model': model, 'excluded': reasons})
             if reasons:

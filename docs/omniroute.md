@@ -62,6 +62,8 @@ The [offline reconciliation planner](omniroute-reconciliation.md) compares an ap
 
 Free-only classification requires explicit, complete zero pricing for supported text or embedding contracts. Missing, partial, invalid, or positive pricing is not free. Media and other endpoint shapes are excluded from automatic free classification until their complete pricing contracts are represented. Account tier, quota, privacy, and runtime entitlement require separate current evidence regardless of catalog classification.
 
+Known dynamic selectors, including OpenRouter's free and auto router families and Kilo's auto selector, are held from exact-model proposals because their downstream model can change. Wildcards and opaque or whitespace-decorated identifiers are also rejected. This check covers known selectors, not arbitrary database aliases; verify the deployed runtime's mapping before import.
+
 ## Import a saved OpenRouter snapshot
 
 The optional offline importer refreshes candidate metadata from a saved public OpenRouter models response and combines it with a credential-free evidence file. It calls the scoring helpers from the repository path supplied by the operator; only point it at trusted code. It does not fetch the snapshot, contact providers, or change routes.

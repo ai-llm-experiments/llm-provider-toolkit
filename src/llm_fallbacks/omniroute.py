@@ -37,6 +37,43 @@ ROUTES = {
 }
 
 
+DYNAMIC_ROUTER_IDS = frozenset({
+    "openrouter/free", "openrouter/auto", "openrouter/auto-code", "openrouter/auto-beta",
+    "openrouter/pareto-code", "openrouter/fusion", "typesafe/jev-router", "nvidia/switchyard",
+})
+GATEWAY_PREFIXES = {"openrouter": "openrouter", "kilo": "kilo", "kilocode": "kilo",
+                    "kilo-gateway": "kilo", "kg": "kilo", "kc": "kilo"}
+CONTEXT_SUFFIX = re.compile(r"\[(\d+)([kKmM])?\]\s*$")
+
+
+def is_exact_target(model: str) -> bool:
+    return not any(character in model for character in ("*", "?", "#", "\\")) and not any(
+        ord(character) < 32 or character.isspace() or character == "\ufeff" for character in model
+    )
+
+
+def is_dynamic_router(provider: str, model: str) -> bool:
+    """Classify selector identity without rewriting the emitted exact model ID."""
+    normalized = model.strip()
+    # Native stripContextWindowSuffix removes a trailing [digits][k|m] tag.
+    # Hold nested forms too because successive proxy/parser layers can strip it.
+    while CONTEXT_SUFFIX.search(normalized):
+        normalized = CONTEXT_SUFFIX.sub("", normalized).rstrip()
+    normalized = "/".join(part.strip().strip("\ufeff").strip() for part in normalized.split("/"))
+    normalized = normalized.split(":", 1)[0].strip()
+    current_provider = GATEWAY_PREFIXES.get(provider, provider)
+    while "/" in normalized:
+        if normalized in DYNAMIC_ROUTER_IDS or normalized.startswith("kilo-auto/"):
+            return True
+        prefix, remainder = normalized.split("/", 1)
+        gateway = GATEWAY_PREFIXES.get(prefix)
+        if gateway is None:
+            break
+        current_provider = gateway
+        normalized = remainder
+    return f"{current_provider}/{normalized}" in DYNAMIC_ROUTER_IDS or normalized.startswith("kilo-auto/")
+
+
 def read_json(path: Path):
     with path.open("rb") as source:
         raw = source.read(MAX_INPUT_BYTES + 1)
@@ -135,6 +172,10 @@ def generate(catalog, policy, as_of: datetime, catalog_hash: str, policy_hash: s
         seen_runtime_targets.add(runtime_identity)
         row = index.get((provider, model_id))
         reasons = []
+        if not is_exact_target(model_id) or not is_exact_target(model):
+            reasons.append("model-target-syntax-not-exact")
+        if is_dynamic_router(provider, model_id) or is_dynamic_router(provider, model):
+            reasons.append("dynamic-router-policy-unbounded")
         if model != model_id:
             reasons.append("upstream-model-differs-from-canonical-id")
         if node != provider and (provider, node) not in provider_mappings:
