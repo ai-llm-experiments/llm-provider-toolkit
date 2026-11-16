@@ -60,12 +60,12 @@ def moment(value):
     return result.astimezone(timezone.utc)
 
 
-def read_json(path):
+def read_json(path, *, decoder=json.loads):
     with path.open("rb") as source:
         raw = source.read(MAX_BYTES + 1)
     if len(raw) > MAX_BYTES:
         raise ValueError("Input exceeds 16 MiB")
-    return json.loads(raw), hashlib.sha256(raw).hexdigest()
+    return decoder(raw), hashlib.sha256(raw).hexdigest()
 
 
 def encoded(value):
@@ -92,7 +92,10 @@ def snapshot_entry(provider, path, providers, cache):
     raw_cache = cache.setdefault("raw", {})
     parsed_cache = cache.setdefault("parsed", {})
     if identity not in raw_cache:
-        raw_cache[identity] = read_json(path)
+        decoder = getattr(providers, "decode_provider_snapshot", None)
+        if not callable(decoder):
+            raise ValueError("Provider parser must supply an exact snapshot number decoder")
+        raw_cache[identity] = read_json(path, decoder=decoder)
     raw, digest = raw_cache[identity]
     key = (provider, identity)
     if key not in parsed_cache:
