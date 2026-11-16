@@ -90,6 +90,11 @@ def get_litellm_models(*, test_prepend_provider: bool = False) -> dict[str, Lite
     -------
         dict[str, Any]: Dictionary where keys are model names and values are their specifications
     """
+    if os.environ.get("OMNIROUTE_BASE_URL"):
+        from llm_fallbacks.omniroute import as_model_specs, get_omniroute_models
+
+        return as_model_specs(get_omniroute_models())
+
     if CACHED_LITELLM_MODELS:
         return CACHED_LITELLM_MODELS
 
@@ -232,6 +237,16 @@ def sort_models_by_cost_and_limits(
     -------
         list of tuples mapping model names to their original specifications, sorted by cost and token limits
     """
+
+    if os.environ.get("OMNIROUTE_BASE_URL"):
+        from llm_fallbacks.omniroute import sort_omniroute_models
+
+        ranked = sort_omniroute_models(models)
+        if free_only:
+            ranked = [(name, spec) for name, spec in ranked if
+                      (spec.get("pricing") or {}).get("prompt") in {0, "0"} and
+                      (spec.get("pricing") or {}).get("completion") in {0, "0"}]
+        return ranked
 
     def _negative_one_to_inf(x: float | int) -> float | int:
         return float("inf") if x in {-1, -1.0} else x

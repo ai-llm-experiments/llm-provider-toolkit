@@ -28,7 +28,12 @@ from llm_fallbacks.core import (
     get_vision_models,
     sort_models_by_cost_and_limits,
 )
-from llm_fallbacks.filter_litellm import filter_models
+def __getattr__(name):
+    if name == "filter_models":
+        from llm_fallbacks.filter_litellm import filter_models
+
+        return filter_models
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __version__ = "0.1.0"
 __all__ = [
