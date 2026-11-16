@@ -5,7 +5,6 @@ from __future__ import annotations
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
-
 PROVIDER_CATALOGS = {
     "openrouter": {
         "base_url": "https://openrouter.ai/api/v1",

@@ -242,11 +242,7 @@ def sort_models_by_cost_and_limits(
     filtered_models: dict[str, LiteLLMBaseModelSpec] = {
         model: spec
         for model, spec in models.items()
-        if not model.startswith("ollama/")
-        and (
-            not free_only
-            or has_explicit_zero_cost(spec)
-        )
+        if not model.startswith("ollama/") and (not free_only or has_explicit_zero_cost(spec))
     }
 
     # Calculate costs and max tokens

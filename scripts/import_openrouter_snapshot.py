@@ -13,7 +13,6 @@ from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
-
 SOURCE_URL = "https://openrouter.ai/api/v1/models"
 MAX_BYTES = 16 * 1024 * 1024
 MAX_ROWS = 20_000

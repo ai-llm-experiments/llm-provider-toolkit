@@ -38,12 +38,13 @@ def has_explicit_zero_cost(spec: dict[str, Any]) -> bool:
         required = ("prompt", "completion") if text_mode else ("prompt",)
         if not all(key in reported for key in required):
             return False
-    costs = {key: value for key, value in spec.items()
-             if "_cost_" in key or key.endswith("_cost")}
+    costs = {key: value for key, value in spec.items() if "_cost_" in key or key.endswith("_cost")}
     if not costs or not all(_zero(value) for value in costs.values()):
         return False
     if text_mode:
-        pairs = (("input_cost_per_token", "output_cost_per_token"),
-                 ("input_cost_per_character", "output_cost_per_character"))
+        pairs = (
+            ("input_cost_per_token", "output_cost_per_token"),
+            ("input_cost_per_character", "output_cost_per_character"),
+        )
         return any(all(key in costs for key in pair) for pair in pairs)
     return "input_cost_per_token" in costs or "input_cost_per_character" in costs

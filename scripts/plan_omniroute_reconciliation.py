@@ -367,13 +367,15 @@ def plan(proposal, current, ownership, proposal_hash, export_hash):
                 "expectedName": old["name"] if old else None,
                 "desiredNameMustBeUnique": name,
             },
-            "rollback": {"method": "PUT", "path": f"/api/combos/{quote(identity, safe='')}", "body": rollback}
-            if old
-            else {
-                "method": "DELETE",
-                "pathFromCreatedResponseId": "/api/combos/{created-id}",
-                "requiresCreatedRecordIdentityAndPostApplyHash": True,
-            },
+            "rollback": (
+                {"method": "PUT", "path": f"/api/combos/{quote(identity, safe='')}", "body": rollback}
+                if old
+                else {
+                    "method": "DELETE",
+                    "pathFromCreatedResponseId": "/api/combos/{created-id}",
+                    "requiresCreatedRecordIdentityAndPostApplyHash": True,
+                }
+            ),
         }
         operations.append(operation)
         decisions.append({"name": name, "comboId": identity, "status": "planned", "reasons": []})

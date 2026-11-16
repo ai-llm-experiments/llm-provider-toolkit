@@ -7,7 +7,6 @@ provider discovery. Public library functions load their implementation on use.
 from importlib import import_module as _import_module
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
     from llm_fallbacks.core import (
         calculate_cost_per_token,

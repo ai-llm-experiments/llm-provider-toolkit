@@ -15,7 +15,6 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 MAX_INPUT_BYTES = 16 * 1024 * 1024
 MAX_ROWS = 20_000
 ROUTES = {
