@@ -16,7 +16,7 @@ if __name__ == "__main__":
 from llm_fallbacks.core import get_litellm_models, sort_models_by_cost_and_limits
 
 from llm_fallbacks.pricing import has_explicit_zero_cost
-from llm_fallbacks.provider_catalogs import parse_openai_models
+from llm_fallbacks.provider_catalogs import is_retired_provider, parse_openai_models
 
 logger = logging.getLogger(__name__)
 
@@ -270,6 +270,8 @@ class CustomProviderConfig(BaseProviderConfig):
     free_models: Dict[str, LiteLLMBaseModelSpec] = field(default_factory=dict)
     live_model_keys: set[str] = field(default_factory=set)
     live_fetch_succeeded: bool = False
+    # Keep eager validation for callers that explicitly require a key at load time.
+    validate_api_key_on_init: bool = True
 
     def __post_init__(self):
         self._requested_models: Any = None
@@ -294,10 +296,11 @@ class CustomProviderConfig(BaseProviderConfig):
         else:
             self.api_env_key_name = env_key_name.upper()
 
-        if (not self.api_env_key_name or not self.api_env_key_name.strip()) and self.api_key_required:
+        required_now = self.api_key_required and self.validate_api_key_on_init
+        if (not self.api_env_key_name or not self.api_env_key_name.strip()) and required_now:
             raise ValueError(f"API environment key name for {self.provider_name} is not set.")
         self.api_key = os.getenv(self.api_env_key_name)
-        if (not self.api_key or not self.api_key.strip()) and self.api_key_required:
+        if (not self.api_key or not self.api_key.strip()) and required_now:
             raise ValueError(
                 f"API key for '{self.provider_name}' is not set. Set '{self.api_env_key_name}' in your environment."
             )
@@ -359,6 +362,13 @@ class CustomProviderConfig(BaseProviderConfig):
             }
 
     def _parse_models(self):
+        if is_retired_provider(self.provider_name):
+            self.model_specs = {}
+            self.free_models = {}
+            self.live_model_keys = set()
+            self.live_fetch_succeeded = False
+            logger.warning("GitHub Models has retired; no models or routes are available for this provider.")
+            return
         models: Dict[str, LiteLLMBaseModelSpec] = (  # pyright: ignore[reportAssignmentType]
             self.raw_models
             if isinstance(self.raw_models, dict)
@@ -423,6 +433,8 @@ def _should_include_base_model(
     seen_model_names: set[str],
 ) -> bool:
     provider_name = str(model_spec.get("litellm_provider", "")).casefold()
+    if is_retired_provider(provider_name, model_name):
+        return False
     canonical_name = _normalize_model_identifier(provider_name, model_name)
 
     if canonical_name in seen_model_names:
@@ -459,7 +471,7 @@ if "CUSTOM_PROVIDERS" not in globals():
             api_key_required=False,
             auto_fetch_models=False,
         ),
-        # --- Free-tier providers (OpenAI-compatible) ---
+        # Additional providers require account-specific access and pricing evidence.
         CustomProviderConfig(
             provider_name="groq",
             base_url="https://api.groq.com/openai/v1",
@@ -501,7 +513,8 @@ if "CUSTOM_PROVIDERS" not in globals():
             provider_name="together_ai",
             base_url="https://api.together.xyz/v1",
             api_env_key_name="TOGETHER_API_KEY",
-            api_key_required=False,
+            api_key_required=True,
+            validate_api_key_on_init=False,
             auto_fetch_models=False,
         ),
         CustomProviderConfig(
@@ -521,19 +534,13 @@ if "CUSTOM_PROVIDERS" not in globals():
             provider_name="nvidia_nim",
             base_url="https://integrate.api.nvidia.com/v1",
             api_env_key_name="NVIDIA_API_KEY",
-            api_key_required=False,
+            api_key_required=True,
+            validate_api_key_on_init=False,
             auto_fetch_models=False,
         ),
         CustomProviderConfig(
             provider_name="cohere",
             base_url="https://api.cohere.com/v2",
-            api_key_required=False,
-            auto_fetch_models=False,
-        ),
-        CustomProviderConfig(
-            provider_name="github_models",
-            base_url="https://models.inference.ai.azure.com",
-            api_env_key_name="GITHUB_MODELS_TOKEN",
             api_key_required=False,
             auto_fetch_models=False,
         ),

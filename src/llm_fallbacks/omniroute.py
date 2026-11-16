@@ -17,6 +17,7 @@ from pathlib import Path
 
 MAX_INPUT_BYTES = 16 * 1024 * 1024
 MAX_ROWS = 20_000
+RETIRED_PROVIDER_IDS = frozenset({"github", "github_models"})
 ROUTES = {
     "text": ({"chat", "responses", "completion"}, "chat/completions"),
     "agent": ({"chat", "responses"}, "chat/completions"),
@@ -209,6 +210,9 @@ def catalog_privacy_provenance(catalog, provenance, catalog_hash, as_of, age_hou
 
 def target_admission(target, provider, model_id, node, model, row, provider_mappings, as_of, age_hours):
     reasons = []
+    # Keep this standalone adapter free of package/config imports.
+    if provider.casefold() in RETIRED_PROVIDER_IDS or node.casefold() in RETIRED_PROVIDER_IDS:
+        reasons.append("provider-service-retired")
     if not is_exact_target(model_id) or not is_exact_target(model):
         reasons.append("model-target-syntax-not-exact")
     if is_dynamic_router(provider, model_id) or is_dynamic_router(provider, model):

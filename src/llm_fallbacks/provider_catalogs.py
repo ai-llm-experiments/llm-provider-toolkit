@@ -7,6 +7,17 @@ import math
 from decimal import Decimal, DecimalException, InvalidOperation
 from typing import Any
 
+RETIRED_PROVIDER_IDS = frozenset({"github", "github_models"})
+
+
+def is_retired_provider(provider: Any, model_id: str = "") -> bool:
+    """Recognize the retired GitHub Models service independently of Copilot."""
+    name = str(provider or "").strip().casefold()
+    if name:
+        return name in RETIRED_PROVIDER_IDS
+    return model_id.partition("/")[0].strip().casefold() in RETIRED_PROVIDER_IDS
+
+
 PROVIDER_CATALOGS = {
     "openrouter": {
         "base_url": "https://openrouter.ai/api/v1",

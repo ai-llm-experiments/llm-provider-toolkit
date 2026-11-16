@@ -39,6 +39,7 @@ from llm_fallbacks.core import get_model_priority_rank
 from llm_fallbacks.quality import compute_quality_score
 
 from llm_fallbacks.pricing import has_explicit_zero_cost
+from llm_fallbacks.provider_catalogs import is_retired_provider
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +72,11 @@ def build_free_models_list(free_models: list[tuple[str, dict[str, Any]]]) -> lis
     """
     entries: list[dict[str, Any]] = []
     for model_id, spec in free_models:
-        if is_local_model(model_id) or not has_explicit_zero_cost(spec):
+        if (
+            is_local_model(model_id)
+            or is_retired_provider(spec.get("litellm_provider"), model_id)
+            or not has_explicit_zero_cost(spec)
+        ):
             continue
 
         quality_score, quality_source = compute_quality_score(spec)
@@ -144,6 +149,8 @@ def build_provider_urls(providers: list[CustomProviderConfig]) -> dict[str, str]
     """Build a map of provider name to public API base URL (excludes local-only hosts)."""
     urls: dict[str, str] = {}
     for provider in providers:
+        if is_retired_provider(provider.provider_name):
+            continue
         base = (provider.base_url or "").strip().rstrip("/")
         if not base:
             continue
@@ -349,6 +356,8 @@ def to_litellm_config_yaml(
     free_models_for_alias: list[tuple[str, dict[str, Any]]] = []
 
     for p in providers:
+        if is_retired_provider(p.provider_name):
+            continue
         for model_name, model_spec in (p.free_models if free_only else p.model_specs).items():
             is_free = has_explicit_zero_cost(model_spec)
             is_local = (
@@ -384,6 +393,8 @@ def to_litellm_config_yaml(
             total_fallbacks_found = 0
             total_fallbacks_required = 25
             for k, v in FREE_MODELS:
+                if is_retired_provider(v.get("litellm_provider"), k):
+                    continue
                 k_name = (
                     k
                     if k.startswith(f"{v.get('litellm_provider')}/") and k not in suitable_fallbacks
