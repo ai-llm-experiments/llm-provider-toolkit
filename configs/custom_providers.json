@@ -8521,14 +8521,6 @@
         "free_models": {}
     },
     {
-        "provider_name": "completions_me",
-        "base_url": "https://api.completions.me/v1",
-        "api_env_key_name": "COMPLETIONS_API_KEY",
-        "api_key_required": false,
-        "model_specs": {},
-        "free_models": {}
-    },
-    {
         "provider_name": "vertexai",
         "base_url": "https://us-central1-aiplatform.googleapis.com/v1",
         "api_env_key_name": "VERTEXAI_API_KEY",

@@ -10,6 +10,7 @@ const KEY_LABELS: Record<string, string> = {
   together: "Together AI",
   fireworks: "Fireworks AI",
   github_models: "GitHub Models (retired July 2026)",
+  completions_me: "Completions.me (disabled)",
 };
 
 const PRIMARY_FIELDS = ["openrouter", "groq", "google", "mistral", "deepseek", "together", "fireworks"];

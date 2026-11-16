@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from llm_fallbacks.config import LiteLLMBaseModelSpec
 
 from llm_fallbacks.pricing import has_explicit_zero_cost
-from llm_fallbacks.provider_catalogs import is_retired_provider
+from llm_fallbacks.provider_catalogs import is_excluded_provider
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +97,7 @@ def get_litellm_models(*, test_prepend_provider: bool = False) -> dict[str, Lite
         return {
             name: spec
             for name, spec in CACHED_LITELLM_MODELS.items()
-            if not is_retired_provider(spec.get("litellm_provider"), str(name))
+            if not is_excluded_provider(spec.get("litellm_provider"), str(name))
         }
 
     models: dict[str, LiteLLMBaseModelSpec] = {}
@@ -105,7 +105,7 @@ def get_litellm_models(*, test_prepend_provider: bool = False) -> dict[str, Lite
         casefold_key = model_key = str(k).casefold()
         if casefold_key == "sample_spec":
             continue
-        if is_retired_provider(v.get("litellm_provider"), str(k)):
+        if is_excluded_provider(v.get("litellm_provider"), str(k)):
             continue
 
         if test_prepend_provider:

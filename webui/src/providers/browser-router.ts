@@ -3,6 +3,10 @@ import { STORAGE_KEYS, loadJson, saveJson } from "../storage-keys";
 export const RETRYABLE = new Set([408, 429, 500, 502, 503, 504]);
 const LOCAL_PROVIDERS = new Set(["ollama", "vllm", "lmstudio", "xinference"]);
 const RETIRED_PROVIDERS = new Set(["github", "github_models"]);
+const UNVERIFIED_INFERENCE_PROVIDERS = new Set([
+  "completions", "completions_me", "completions-me", "completions.me",
+]);
+const EXCLUDED_PROVIDERS = new Set([...RETIRED_PROVIDERS, ...UNVERIFIED_INFERENCE_PROVIDERS]);
 const MAX_CHAIN = 25;
 
 export const PROVIDER_KEY_FIELDS: Record<string, string> = {
@@ -74,7 +78,7 @@ export function hasKeyForModel(modelId: string, keys: ApiKeys): boolean {
   const slash = modelId.indexOf("/");
   if (slash <= 0) return false;
   const provider = modelId.slice(0, slash);
-  if (RETIRED_PROVIDERS.has(provider.trim().toLowerCase())) return false;
+  if (EXCLUDED_PROVIDERS.has(provider.trim().toLowerCase())) return false;
   return !!resolveApiKey(provider, keys);
 }
 
@@ -181,6 +185,9 @@ export async function chatWithBrowserFallback(options: {
   const requested = parseModelId(model);
   if (requested && RETIRED_PROVIDERS.has(requested.provider.trim().toLowerCase())) {
     throw new Error("GitHub Models retired on July 30, 2026.");
+  }
+  if (requested && UNVERIFIED_INFERENCE_PROVIDERS.has(requested.provider.trim().toLowerCase())) {
+    throw new Error("Provider disabled because real inference could not be verified.");
   }
   if (!hasAnyKey(keys)) throw new Error("BROWSER_UNAVAILABLE");
 

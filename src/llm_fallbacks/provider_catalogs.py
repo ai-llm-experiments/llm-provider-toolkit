@@ -8,6 +8,8 @@ from decimal import Decimal, DecimalException, InvalidOperation
 from typing import Any
 
 RETIRED_PROVIDER_IDS = frozenset({"github", "github_models"})
+UNVERIFIED_INFERENCE_PROVIDER_IDS = frozenset({"completions", "completions_me", "completions-me", "completions.me"})
+EXCLUDED_PROVIDER_IDS = RETIRED_PROVIDER_IDS | UNVERIFIED_INFERENCE_PROVIDER_IDS
 
 
 def is_retired_provider(provider: Any, model_id: str = "") -> bool:
@@ -18,7 +20,32 @@ def is_retired_provider(provider: Any, model_id: str = "") -> bool:
     return model_id.partition("/")[0].strip().casefold() in RETIRED_PROVIDER_IDS
 
 
+def is_excluded_provider(provider: Any, model_id: str = "") -> bool:
+    """Exclude retired services and providers lacking verified real inference."""
+    name = str(provider or "").strip().casefold()
+    if name:
+        return name in EXCLUDED_PROVIDER_IDS
+    return model_id.partition("/")[0].strip().casefold() in EXCLUDED_PROVIDER_IDS
+
+
 PROVIDER_CATALOGS = {
+    "openai": {
+        "base_url": "https://api.openai.com/v1",
+        "models_url": "https://api.openai.com/v1/models",
+        "schema": "openai",
+        "auth_env": "OPENAI_API_KEY",
+        "auto_fetch_models": False,
+        "docs": "https://developers.openai.com/api/reference/resources/models/methods/list",
+    },
+    "vertexai": {
+        "base_url": "https://us-central1-aiplatform.googleapis.com/v1",
+        "models_url": "https://us-central1-aiplatform.googleapis.com/v1beta1/publishers/google/models",
+        "schema": "vertex_publisher",
+        "auth_env": "GOOGLE_APPLICATION_CREDENTIALS",
+        "auto_fetch_models": False,
+        "catalog_scope": "publishers/google",
+        "docs": "https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/rest/v1beta1/publishers.models/list",
+    },
     "openrouter": {
         "base_url": "https://openrouter.ai/api/v1",
         "models_url": "https://openrouter.ai/api/v1/models",
@@ -346,6 +373,7 @@ def parse_provider_models(
     if not isinstance(response, dict):
         raise ValueError("Provider response must be an object")
     schema_parsers = {
+        "vertex_publisher": _parse_vertex_publisher_models,
         "mistral": _parse_mistral_models,
         "cohere": _parse_cohere_models,
         "fireworks": _parse_fireworks_models,
@@ -605,6 +633,47 @@ def _catalog_identity(row: dict[str, Any], field: str, seen: set[str]) -> str:
         raise ValueError("Duplicate provider model identity")
     seen.add(value)
     return value
+
+
+def _parse_vertex_publisher_models(response: dict[str, Any], *, qualify_ids: bool) -> dict[str, dict[str, Any]]:
+    """Read the Google publisher catalog without inventing a serving identity."""
+    result = {}
+    seen: set[str] = set()
+    for row in _complete_catalog_rows(response, "publisherModels"):
+        name = _catalog_identity(row, "name", seen)
+        parts = name.split("/")
+        if (
+            len(parts) != 4
+            or parts[:3] != ["publishers", "google", "models"]
+            or not parts[3]
+            or parts[3] in (".", "..")
+            or any(char.isspace() or char in "?#\\" for char in parts[3])
+        ):
+            raise ValueError("Vertex publisher snapshot must use exact Google publisher model resources")
+        version = row.get("versionId")
+        if version is not None and (
+            not isinstance(version, str) or not version.isascii() or not version.isdecimal() or len(version) > 100
+        ):
+            raise ValueError("Vertex versionId must be a bounded decimal string")
+        actions = row.get("supportedActions")
+        if actions is not None and not isinstance(actions, dict):
+            raise ValueError("Vertex supportedActions must be an object or unknown")
+        spec = _openai_spec("vertexai", {"id": name})
+        # Catalog resources describe model-garden entries. Serving endpoints,
+        # project/region entitlement, prices and native capabilities are separate.
+        spec["catalog_evidence"] = {
+            "catalog_scope": "publishers/google",
+            "version_id": version,
+            "version_state": row.get("versionState"),
+            "launch_stage": row.get("launchStage"),
+            "supported_actions": actions,
+        }
+        quotes = {key: row[key] for key in ("pricing", "price", "cost") if key in row}
+        spec["pricing_evidence"]["reported_prices"] = quotes or None
+        spec["pricing_evidence"]["units_verified"] = False
+        key = f"vertexai/{name}" if qualify_ids else name
+        result[key] = spec
+    return result
 
 
 def _parse_fireworks_models(response: dict[str, Any], *, qualify_ids: bool) -> dict[str, dict[str, Any]]:

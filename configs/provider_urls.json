@@ -3,7 +3,6 @@
   "chutes": "https://api.chutes.ai/v1",
   "codestral": "https://codestral.mistral.ai/v1",
   "cohere": "https://api.cohere.com/v2",
-  "completions_me": "https://api.completions.me/v1",
   "deepseek": "https://api.deepseek.com/v1",
   "featherless": "https://api.featherless.ai/v1",
   "fireworks_ai": "https://api.fireworks.ai/inference/v1",

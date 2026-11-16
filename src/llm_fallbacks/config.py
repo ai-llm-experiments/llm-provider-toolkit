@@ -16,7 +16,7 @@ if __name__ == "__main__":
 from llm_fallbacks.core import get_litellm_models, sort_models_by_cost_and_limits
 
 from llm_fallbacks.pricing import has_explicit_zero_cost
-from llm_fallbacks.provider_catalogs import is_retired_provider, parse_openai_models
+from llm_fallbacks.provider_catalogs import is_excluded_provider, parse_openai_models
 
 logger = logging.getLogger(__name__)
 
@@ -362,12 +362,12 @@ class CustomProviderConfig(BaseProviderConfig):
             }
 
     def _parse_models(self):
-        if is_retired_provider(self.provider_name):
+        if is_excluded_provider(self.provider_name):
             self.model_specs = {}
             self.free_models = {}
             self.live_model_keys = set()
             self.live_fetch_succeeded = False
-            logger.warning("GitHub Models has retired; no models or routes are available for this provider.")
+            logger.warning("Provider %s is excluded from active discovery.", self.provider_name)
             return
         models: Dict[str, LiteLLMBaseModelSpec] = (  # pyright: ignore[reportAssignmentType]
             self.raw_models
@@ -433,7 +433,7 @@ def _should_include_base_model(
     seen_model_names: set[str],
 ) -> bool:
     provider_name = str(model_spec.get("litellm_provider", "")).casefold()
-    if is_retired_provider(provider_name, model_name):
+    if is_excluded_provider(provider_name, model_name):
         return False
     canonical_name = _normalize_model_identifier(provider_name, model_name)
 
@@ -588,13 +588,6 @@ if "CUSTOM_PROVIDERS" not in globals():
             provider_name="featherless",
             base_url="https://api.featherless.ai/v1",
             api_env_key_name="FEATHERLESS_API_KEY",
-            api_key_required=False,
-            auto_fetch_models=False,
-        ),
-        CustomProviderConfig(
-            provider_name="completions_me",
-            base_url="https://api.completions.me/v1",
-            api_env_key_name="COMPLETIONS_API_KEY",
             api_key_required=False,
             auto_fetch_models=False,
         ),

@@ -18,6 +18,7 @@ from pathlib import Path
 MAX_INPUT_BYTES = 16 * 1024 * 1024
 MAX_ROWS = 20_000
 RETIRED_PROVIDER_IDS = frozenset({"github", "github_models"})
+UNVERIFIED_INFERENCE_PROVIDER_IDS = frozenset({"completions", "completions_me", "completions-me", "completions.me"})
 ROUTES = {
     "text": ({"chat", "responses", "completion"}, "chat/completions"),
     "agent": ({"chat", "responses"}, "chat/completions"),
@@ -213,6 +214,8 @@ def target_admission(target, provider, model_id, node, model, row, provider_mapp
     # Keep this standalone adapter free of package/config imports.
     if provider.casefold() in RETIRED_PROVIDER_IDS or node.casefold() in RETIRED_PROVIDER_IDS:
         reasons.append("provider-service-retired")
+    if provider.casefold() in UNVERIFIED_INFERENCE_PROVIDER_IDS or node.casefold() in UNVERIFIED_INFERENCE_PROVIDER_IDS:
+        reasons.append("provider-real-inference-unverified")
     if not is_exact_target(model_id) or not is_exact_target(model):
         reasons.append("model-target-syntax-not-exact")
     if is_dynamic_router(provider, model_id) or is_dynamic_router(provider, model):
