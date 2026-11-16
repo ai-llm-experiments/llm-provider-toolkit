@@ -37,12 +37,26 @@ ROUTES = {
 }
 
 
-DYNAMIC_ROUTER_IDS = frozenset({
-    "openrouter/free", "openrouter/auto", "openrouter/auto-code", "openrouter/auto-beta",
-    "openrouter/pareto-code", "openrouter/fusion", "typesafe/jev-router", "nvidia/switchyard",
-})
-GATEWAY_PREFIXES = {"openrouter": "openrouter", "kilo": "kilo", "kilocode": "kilo",
-                    "kilo-gateway": "kilo", "kg": "kilo", "kc": "kilo"}
+DYNAMIC_ROUTER_IDS = frozenset(
+    {
+        "openrouter/free",
+        "openrouter/auto",
+        "openrouter/auto-code",
+        "openrouter/auto-beta",
+        "openrouter/pareto-code",
+        "openrouter/fusion",
+        "typesafe/jev-router",
+        "nvidia/switchyard",
+    }
+)
+GATEWAY_PREFIXES = {
+    "openrouter": "openrouter",
+    "kilo": "kilo",
+    "kilocode": "kilo",
+    "kilo-gateway": "kilo",
+    "kg": "kilo",
+    "kc": "kilo",
+}
 CONTEXT_SUFFIX = re.compile(r"\[(\d+)([kKmM])?\]\s*$")
 
 
@@ -104,12 +118,12 @@ def number(value, default=0):
 
 
 def has_evidence(value) -> bool:
-    return isinstance(value, list) and bool(value) and all(
-        isinstance(item, str) and bool(item.strip()) for item in value
+    return (
+        isinstance(value, list) and bool(value) and all(isinstance(item, str) and bool(item.strip()) for item in value)
     )
 
 
-def generate(catalog, policy, as_of: datetime, catalog_hash: str, policy_hash: str):
+def validate_policy(catalog, policy):
     if not isinstance(catalog, list) or len(catalog) > MAX_ROWS:
         raise ValueError("Catalog must be a bounded free_models.json array")
     if not isinstance(policy, dict) or type(policy.get("version")) is not int or policy["version"] != 1:
@@ -136,8 +150,115 @@ def generate(catalog, policy, as_of: datetime, catalog_hash: str, policy_hash: s
     for mapping in mappings:
         if not isinstance(mapping, dict) or not has_evidence(mapping.get("evidence")):
             raise ValueError("Provider mappings require nonblank evidence references")
-        provider_mappings.add((text(mapping.get("catalogProvider"), "mapping catalogProvider"),
-                               text(mapping.get("providerId"), "mapping providerId")))
+        provider_mappings.add(
+            (
+                text(mapping.get("catalogProvider"), "mapping catalogProvider"),
+                text(mapping.get("providerId"), "mapping providerId"),
+            )
+        )
+    return attestations, age_hours, supported, requested_attempts, deadline_ms, provider_mappings
+
+
+def target_admission(target, provider, model_id, node, model, row, provider_mappings, as_of, age_hours):
+    reasons = []
+    if not is_exact_target(model_id) or not is_exact_target(model):
+        reasons.append("model-target-syntax-not-exact")
+    if is_dynamic_router(provider, model_id) or is_dynamic_router(provider, model):
+        reasons.append("dynamic-router-policy-unbounded")
+    if model != model_id:
+        reasons.append("upstream-model-differs-from-canonical-id")
+    if node != provider and (provider, node) not in provider_mappings:
+        reasons.append("provider-mapping-unverified")
+    if row is None:
+        reasons.append("absent-from-canonical-catalog")
+    elif row.get("is_free") is not True or not all(
+        zero(row.get(k)) for k in ("input_cost_per_token", "output_cost_per_token")
+    ):
+        reasons.append("catalog-does-not-declare-zero-token-prices")
+    if target.get("connected") is not True:
+        reasons.append("connection-unverified")
+    if target.get("providerScopeApproved") is not True:
+        reasons.append("all-provider-accounts-must-match-route-policy")
+    prices = target.get("prices", {})
+    if not isinstance(prices, dict) or not prices or not all(zero(v) for v in prices.values()):
+        reasons.append("all-applicable-prices-must-be-explicit-zero")
+    if target.get("pricesComplete") is not True:
+        reasons.append("applicable-price-fields-unverified")
+    if target.get("freeOnlyEnforced") is not True:
+        reasons.append("paid-escalation-boundary-unverified")
+    if target.get("requestSucceeded") is not True:
+        reasons.append("live-request-unverified")
+    observed = moment(text(target.get("verifiedAt"), "verifiedAt"))
+    age = (as_of - observed).total_seconds() / 3600
+    if age < 0 or age > age_hours:
+        reasons.append("verification-outside-freshness-window")
+    sources = target.get("evidence", [])
+    if not has_evidence(sources):
+        reasons.append("evidence-missing")
+    privacy = target.get("privacy")
+    if privacy not in ("private-approved", "public-demo"):
+        reasons.append("privacy-unclassified")
+    purposes = target.get("purposes", [])
+    if not isinstance(purposes, list) or not purposes or any(x not in ROUTES for x in purposes):
+        reasons.append("purpose-unclassified")
+        purposes = []
+    return reasons, privacy, purposes
+
+
+def route_admission(row, target, purpose, privacy, supported):
+    modes, endpoint = ROUTES[purpose]
+    rejected = []
+    if row.get("mode") not in modes:
+        rejected.append("canonical-mode-incompatible")
+    endpoints = target.get("endpoints", [])
+    if not isinstance(endpoints, list) or not all(isinstance(x, str) for x in endpoints):
+        raise ValueError("endpoints must list verified endpoint paths")
+    if endpoint not in endpoints:
+        rejected.append("endpoint-unverified")
+    if endpoint not in supported:
+        rejected.append("runtime-combo-dispatch-unverified")
+    if purpose in ("agent", "coding") and (
+        row.get("supports_function_calling") is not True or target.get("toolsVerified") is not True
+    ):
+        rejected.append("tool-contract-unverified")
+    if purpose in ("coding", "persona"):
+        suitability = target.get("purposeEvidence", {})
+        proof = suitability.get(purpose) if isinstance(suitability, dict) else None
+        if not isinstance(proof, str) or not proof.strip():
+            rejected.append("task-suitability-evidence-missing")
+    suffix = "free" if privacy == "private-approved" else "free-demo"
+    route_name = f"{purpose}-{suffix}"
+    embedding_fingerprint = None
+    if purpose == "embed":
+        space = target.get("embeddingSpace")
+        if (
+            not isinstance(space, dict)
+            or not isinstance(space.get("identity"), str)
+            or not space["identity"].strip()
+            or len(space["identity"]) > 512
+            or type(space.get("dimensions")) is not int
+            or space["dimensions"] < 1
+            or not has_evidence(space.get("evidence"))
+        ):
+            rejected.append("embedding-space-unverified")
+        else:
+            requested_name = target.get("routeName")
+            if (
+                not isinstance(requested_name, str)
+                or not re.fullmatch(r"embed-[a-z0-9-]{1,75}", requested_name)
+                or not requested_name.endswith(f"-{suffix}")
+            ):
+                rejected.append("embedding-route-name-invalid")
+            else:
+                route_name = requested_name
+                embedding_fingerprint = (space["identity"].strip(), space["dimensions"])
+    return endpoint, rejected, route_name, embedding_fingerprint
+
+
+def generate(catalog, policy, as_of: datetime, catalog_hash: str, policy_hash: str):
+    attestations, age_hours, supported, requested_attempts, deadline_ms, provider_mappings = validate_policy(
+        catalog, policy
+    )
     index = {}
     catalog_rank = {}
     for rank, row in enumerate(catalog):
@@ -171,94 +292,25 @@ def generate(catalog, policy, as_of: datetime, catalog_hash: str, policy_hash: s
             raise ValueError(f"Duplicate runtime target: {runtime_identity}")
         seen_runtime_targets.add(runtime_identity)
         row = index.get((provider, model_id))
-        reasons = []
-        if not is_exact_target(model_id) or not is_exact_target(model):
-            reasons.append("model-target-syntax-not-exact")
-        if is_dynamic_router(provider, model_id) or is_dynamic_router(provider, model):
-            reasons.append("dynamic-router-policy-unbounded")
-        if model != model_id:
-            reasons.append("upstream-model-differs-from-canonical-id")
-        if node != provider and (provider, node) not in provider_mappings:
-            reasons.append("provider-mapping-unverified")
-        if row is None:
-            reasons.append("absent-from-canonical-catalog")
-        elif row.get("is_free") is not True or not all(zero(row.get(k)) for k in (
-            "input_cost_per_token", "output_cost_per_token"
-        )):
-            reasons.append("catalog-does-not-declare-zero-token-prices")
-        if target.get("connected") is not True:
-            reasons.append("connection-unverified")
-        if target.get("providerScopeApproved") is not True:
-            reasons.append("all-provider-accounts-must-match-route-policy")
-        prices = target.get("prices", {})
-        if not isinstance(prices, dict) or not prices or not all(zero(v) for v in prices.values()):
-            reasons.append("all-applicable-prices-must-be-explicit-zero")
-        if target.get("pricesComplete") is not True:
-            reasons.append("applicable-price-fields-unverified")
-        if target.get("freeOnlyEnforced") is not True:
-            reasons.append("paid-escalation-boundary-unverified")
-        if target.get("requestSucceeded") is not True:
-            reasons.append("live-request-unverified")
-        observed = moment(text(target.get("verifiedAt"), "verifiedAt"))
-        age = (as_of - observed).total_seconds() / 3600
-        if age < 0 or age > age_hours:
-            reasons.append("verification-outside-freshness-window")
-        sources = target.get("evidence", [])
-        if not has_evidence(sources):
-            reasons.append("evidence-missing")
-        privacy = target.get("privacy")
-        if privacy not in ("private-approved", "public-demo"):
-            reasons.append("privacy-unclassified")
-        purposes = target.get("purposes", [])
-        if not isinstance(purposes, list) or not purposes or any(x not in ROUTES for x in purposes):
-            reasons.append("purpose-unclassified")
-            purposes = []
-        entry = {"catalogProvider": provider, "catalogId": model_id, "providerId": node,
-                 "model": model, "catalogRank": catalog_rank.get((provider, model_id)),
-                 "excluded": reasons, "routes": []}
+        reasons, privacy, purposes = target_admission(
+            target, provider, model_id, node, model, row, provider_mappings, as_of, age_hours
+        )
+        entry = {
+            "catalogProvider": provider,
+            "catalogId": model_id,
+            "providerId": node,
+            "model": model,
+            "catalogRank": catalog_rank.get((provider, model_id)),
+            "excluded": reasons,
+            "routes": [],
+        }
         decisions.append(entry)
         if reasons:
             continue
         for purpose in sorted(set(purposes)):
-            modes, endpoint = ROUTES[purpose]
-            rejected = []
-            if row.get("mode") not in modes:
-                rejected.append("canonical-mode-incompatible")
-            endpoints = target.get("endpoints", [])
-            if not isinstance(endpoints, list) or not all(isinstance(x, str) for x in endpoints):
-                raise ValueError("endpoints must list verified endpoint paths")
-            if endpoint not in endpoints:
-                rejected.append("endpoint-unverified")
-            if endpoint not in supported:
-                rejected.append("runtime-combo-dispatch-unverified")
-            if purpose in ("agent", "coding") and (
-                row.get("supports_function_calling") is not True or target.get("toolsVerified") is not True
-            ):
-                rejected.append("tool-contract-unverified")
-            if purpose in ("coding", "persona"):
-                suitability = target.get("purposeEvidence", {})
-                proof = suitability.get(purpose) if isinstance(suitability, dict) else None
-                if not isinstance(proof, str) or not proof.strip():
-                    rejected.append("task-suitability-evidence-missing")
-            suffix = "free" if privacy == "private-approved" else "free-demo"
-            route_name = f"{purpose}-{suffix}"
-            embedding_fingerprint = None
-            if purpose == "embed":
-                space = target.get("embeddingSpace")
-                if (not isinstance(space, dict) or not isinstance(space.get("identity"), str)
-                        or not space["identity"].strip() or len(space["identity"]) > 512
-                        or type(space.get("dimensions")) is not int or space["dimensions"] < 1
-                        or not has_evidence(space.get("evidence"))):
-                    rejected.append("embedding-space-unverified")
-                else:
-                    requested_name = target.get("routeName")
-                    if (not isinstance(requested_name, str)
-                            or not re.fullmatch(r"embed-[a-z0-9-]{1,75}", requested_name)
-                            or not requested_name.endswith(f"-{suffix}")):
-                        rejected.append("embedding-route-name-invalid")
-                    else:
-                        route_name = requested_name
-                        embedding_fingerprint = (space["identity"].strip(), space["dimensions"])
+            endpoint, rejected, route_name, embedding_fingerprint = route_admission(
+                row, target, purpose, privacy, supported
+            )
             entry["routes"].append({"name": route_name, "excluded": rejected})
             if rejected:
                 continue
@@ -273,34 +325,66 @@ def generate(catalog, policy, as_of: datetime, catalog_hash: str, policy_hash: s
 
     combos = []
     for name, candidates in sorted(groups.items()):
-        candidates.sort(key=lambda item: (
-            number(item[1].get("priority"), 1000),
-            catalog_rank[(item[1]["catalogProvider"], item[1]["catalogId"])],
-            item[1]["providerId"], item[1]["model"],
-        ))
-        models = [{"kind": "model", "providerId": target["providerId"], "model": target["model"]}
-                  for _, target, _ in candidates]
+        candidates.sort(
+            key=lambda item: (
+                number(item[1].get("priority"), 1000),
+                catalog_rank[item[1]["catalogProvider"], item[1]["catalogId"]],
+                item[1]["providerId"],
+                item[1]["model"],
+            )
+        )
+        models = [
+            {"kind": "model", "providerId": target["providerId"], "model": target["model"]}
+            for _, target, _ in candidates
+        ]
         attempt_budget = min(len(models), requested_attempts)
         description = "Managed from llm_fallbacks. Priority order uses operator preference and canonical catalog rank."
         if name.endswith("free-demo"):
             description += " Public prompts only. Provider may retain or train on prompts."
-        payload = {"name": name, "description": description, "strategy": "priority", "models": models,
-                   "config": {"disableSessionStickiness": False, "maxGlobalAttempts": attempt_budget,
-                              "comboTimeoutMs": deadline_ms, "maxRetries": 0, "maxSetRetries": 0}}
+        payload = {
+            "name": name,
+            "description": description,
+            "strategy": "priority",
+            "models": models,
+            "config": {
+                "disableSessionStickiness": False,
+                "maxGlobalAttempts": attempt_budget,
+                "comboTimeoutMs": deadline_ms,
+                "maxRetries": 0,
+                "maxSetRetries": 0,
+            },
+        }
         if name in embedding_spaces:
             payload["dimensions"] = str(embedding_spaces[name][1])
-        combos.append({"endpoint": candidates[0][2], "payload": payload,
-                       "sharedQuotaGroups": sorted({text(t.get("quotaGroup"), "quotaGroup") for _, t, _ in candidates}),
-                       "eligibleTargets": len(models), "attemptBudget": attempt_budget,
-                       "comboTimeoutMs": deadline_ms,
-                       "beyondAttemptBudget": models[attempt_budget:],
-                       "executionLimits": "Stops at the first success, attempt budget, or whole-combo deadline. All eligible targets remain listed."})
-    return {"version": 1, "asOf": as_of.isoformat(), "source": {
-        "repository": "https://github.com/ai-llm-experiments/llm_fallbacks",
-        "catalogSha256": catalog_hash, "policySha256": policy_hash,
-        "catalogRows": len(catalog), "ranking": "priority, canonical catalog order, provider, model",
-    }, "proposedCombos": combos, "targetDecisions": decisions,
-        "unattestedCatalogRows": len(set(index) - {(t["catalogProvider"], t["catalogId"]) for t in decisions})}
+        combos.append(
+            {
+                "endpoint": candidates[0][2],
+                "payload": payload,
+                "sharedQuotaGroups": sorted({text(t.get("quotaGroup"), "quotaGroup") for _, t, _ in candidates}),
+                "eligibleTargets": len(models),
+                "attemptBudget": attempt_budget,
+                "comboTimeoutMs": deadline_ms,
+                "beyondAttemptBudget": models[attempt_budget:],
+                "executionLimits": (
+                    "Stops at the first success, attempt budget, or whole-combo deadline. "
+                    "All eligible targets remain listed."
+                ),
+            }
+        )
+    return {
+        "version": 1,
+        "asOf": as_of.isoformat(),
+        "source": {
+            "repository": "https://github.com/ai-llm-experiments/llm_fallbacks",
+            "catalogSha256": catalog_hash,
+            "policySha256": policy_hash,
+            "catalogRows": len(catalog),
+            "ranking": "priority, canonical catalog order, provider, model",
+        },
+        "proposedCombos": combos,
+        "targetDecisions": decisions,
+        "unattestedCatalogRows": len(set(index) - {(t["catalogProvider"], t["catalogId"]) for t in decisions}),
+    }
 
 
 def main():

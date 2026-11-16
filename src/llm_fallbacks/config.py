@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
-from llm_fallbacks.core import calculate_cost_per_token, get_litellm_models, sort_models_by_cost_and_limits
+from llm_fallbacks.core import get_litellm_models, sort_models_by_cost_and_limits
 
 from llm_fallbacks.pricing import has_explicit_zero_cost
 from llm_fallbacks.provider_catalogs import parse_openai_models

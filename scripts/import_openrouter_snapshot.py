@@ -72,7 +72,7 @@ def load_repository_function(repository, relative_path, name):
     return getattr(module, name)
 
 
-def build(snapshot, catalog, local, observed_at, snapshot_hash, repository, *, as_of):
+def prepare_inputs(snapshot, catalog, local, observed_at, as_of):
     if not isinstance(snapshot, dict) or not isinstance(snapshot.get("data"), list):
         raise ValueError("Snapshot must be an OpenRouter models response")
     rows = snapshot["data"]
@@ -87,10 +87,12 @@ def build(snapshot, catalog, local, observed_at, snapshot_hash, repository, *, a
     max_age = local.get("maxAgeHours", 24)
     if type(max_age) not in (int, float) or not math.isfinite(max_age) or max_age <= 0:
         raise ValueError("maxAgeHours must be a positive finite number")
+
     def validate_time(value):
         age = (as_of - value).total_seconds() / 3600
         if age < 0 or age > max_age:
             raise ValueError("A source timestamp is outside the evaluation freshness window")
+
     validate_time(observed_at)
     account = local.get("account", {})
     if not isinstance(account, dict):
@@ -115,6 +117,13 @@ def build(snapshot, catalog, local, observed_at, snapshot_hash, repository, *, a
         if check.get("verifiedAt"):
             validate_time(timestamp(check["verifiedAt"]))
         check_index[model_id] = check
+    return rows, account, account_evidence, account_time, account_verified, check_index
+
+
+def build(snapshot, catalog, local, observed_at, snapshot_hash, repository, *, as_of):
+    rows, account, account_evidence, account_time, account_verified, check_index = prepare_inputs(
+        snapshot, catalog, local, observed_at, as_of
+    )
     scorer = load_repository_function(repository, "quality.py", "compute_quality_score")
     ranker = load_repository_function(repository, "core.py", "get_model_priority_rank")
     fresh_rows = []
@@ -153,19 +162,41 @@ def build(snapshot, catalog, local, observed_at, snapshot_hash, repository, *, a
             top = {}
         context = capacity(top.get("context_length")) or capacity(row.get("context_length"))
         output = capacity(top.get("max_completion_tokens"))
-        spec = {"max_input_tokens": context, "max_output_tokens": output,
-                "supports_function_calling": "tools" in params, "supports_tool_choice": "tool_choice" in params,
-                "supports_vision": "image" in inputs, "supports_audio_input": "audio" in inputs,
-                "supports_response_schema": "structured_outputs" in params,
-                "supports_prompt_caching": "cache_control" in params}
+        spec = {
+            "max_input_tokens": context,
+            "max_output_tokens": output,
+            "supports_function_calling": "tools" in params,
+            "supports_tool_choice": "tool_choice" in params,
+            "supports_vision": "image" in inputs,
+            "supports_audio_input": "audio" in inputs,
+            "supports_response_schema": "structured_outputs" in params,
+            "supports_prompt_caching": "cache_control" in params,
+        }
         score, source = scorer(spec)
-        canonical = {"id": model_id, "provider": "openrouter", "mode": "chat", "is_free": True,
-                     "input_cost_per_token": 0, "output_cost_per_token": 0, "context_length": context,
-                     "max_output_tokens": output, "quality_score": score, "quality_source": source,
-                     "pricing_evidence": {"source": metadata_reference, "requires_live_verification": True}}
-        for field in ("supports_function_calling", "supports_tool_choice", "supports_vision", "supports_audio_input",
-                      "supports_response_schema", "supports_prompt_caching", "supports_audio_output",
-                      "supports_pdf_input", "supports_system_messages"):
+        canonical = {
+            "id": model_id,
+            "provider": "openrouter",
+            "mode": "chat",
+            "is_free": True,
+            "input_cost_per_token": 0,
+            "output_cost_per_token": 0,
+            "context_length": context,
+            "max_output_tokens": output,
+            "quality_score": score,
+            "quality_source": source,
+            "pricing_evidence": {"source": metadata_reference, "requires_live_verification": True},
+        }
+        for field in (
+            "supports_function_calling",
+            "supports_tool_choice",
+            "supports_vision",
+            "supports_audio_input",
+            "supports_response_schema",
+            "supports_prompt_caching",
+            "supports_audio_output",
+            "supports_pdf_input",
+            "supports_system_messages",
+        ):
             canonical[field] = spec.get(field, False)
         fresh_rows.append(canonical)
         check = check_index.get(model_id, {})
@@ -173,15 +204,21 @@ def build(snapshot, catalog, local, observed_at, snapshot_hash, repository, *, a
         check_time = timestamp(check["verifiedAt"]) if check.get("verifiedAt") else None
         check_verified = bool(check_evidence and check_time)
         times = [observed_at] + ([account_time] if account_time else []) + ([check_time] if check_time else [])
-        target = {"catalogProvider": "openrouter", "catalogId": model_id, "providerId": "openrouter",
-                  "model": model_id, "connected": account_verified and account.get("connected") is True,
-                  "prices": {key: 0 for key in prices}, "verifiedAt": min(times).isoformat(),
-                  "evidence": [metadata_reference] + account_evidence + check_evidence,
-                  "privacy": check.get("privacy", "unknown") if check_verified else "unknown",
-                  "purposes": check.get("purposes", ["text"]) if check_verified else ["text"],
-                  "purposeEvidence": check.get("purposeEvidence", {}) if check_verified else {},
-                  "endpoints": check.get("endpoints", []) if check_verified else [],
-                  "quotaGroup": "openrouter-shared-free-account"}
+        target = {
+            "catalogProvider": "openrouter",
+            "catalogId": model_id,
+            "providerId": "openrouter",
+            "model": model_id,
+            "connected": account_verified and account.get("connected") is True,
+            "prices": dict.fromkeys(prices, 0),
+            "verifiedAt": min(times).isoformat(),
+            "evidence": [metadata_reference, *account_evidence, *check_evidence],
+            "privacy": check.get("privacy", "unknown") if check_verified else "unknown",
+            "purposes": check.get("purposes", ["text"]) if check_verified else ["text"],
+            "purposeEvidence": check.get("purposeEvidence", {}) if check_verified else {},
+            "endpoints": check.get("endpoints", []) if check_verified else [],
+            "quotaGroup": "openrouter-shared-free-account",
+        }
         for flag in ADMISSION_FLAGS:
             target[flag] = check_verified and check.get(flag) is True
         target["providerScopeApproved"] = account_verified and account.get("providerScopeApproved") is True
@@ -190,15 +227,26 @@ def build(snapshot, catalog, local, observed_at, snapshot_hash, repository, *, a
         targets.append(target)
     merged = [row for row in catalog if row.get("provider") != "openrouter"] + fresh_rows
     merged.sort(key=lambda row: (ranker(row["id"]), -row.get("quality_score", 0), row["id"], row["provider"]))
-    access = {"version": 1, "maxAgeHours": local.get("maxAgeHours", 24),
-              "maxGlobalAttempts": local.get("maxGlobalAttempts", 200),
-              "comboTimeoutMs": local.get("comboTimeoutMs", 600_000),
-              "comboEndpoints": local.get("comboEndpoints", []), "targets": targets}
-    report = {"source": SOURCE_URL, "observedAt": observed_at.isoformat(), "evaluatedAt": as_of.isoformat(), "snapshotSha256": snapshot_hash,
-              "snapshotRows": len(rows), "importedChatCandidates": len(fresh_rows),
-              "accountEvidencePresent": account_verified, "modelChecksProvided": len(check_index),
-              "unmatchedModelChecks": sorted(set(check_index) - {r["id"] for r in fresh_rows}),
-              "dispositions": dispositions}
+    access = {
+        "version": 1,
+        "maxAgeHours": local.get("maxAgeHours", 24),
+        "maxGlobalAttempts": local.get("maxGlobalAttempts", 200),
+        "comboTimeoutMs": local.get("comboTimeoutMs", 600_000),
+        "comboEndpoints": local.get("comboEndpoints", []),
+        "targets": targets,
+    }
+    report = {
+        "source": SOURCE_URL,
+        "observedAt": observed_at.isoformat(),
+        "evaluatedAt": as_of.isoformat(),
+        "snapshotSha256": snapshot_hash,
+        "snapshotRows": len(rows),
+        "importedChatCandidates": len(fresh_rows),
+        "accountEvidencePresent": account_verified,
+        "modelChecksProvided": len(check_index),
+        "unmatchedModelChecks": sorted(set(check_index) - {r["id"] for r in fresh_rows}),
+        "dispositions": dispositions,
+    }
     return merged, access, report
 
 
@@ -213,22 +261,37 @@ def main():
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
     # Enforce the offline CLI contract even if a repository helper changes.
+
     def deny_network(event, _args):
         if event in ("socket.connect", "socket.getaddrinfo", "socket.bind"):
             raise RuntimeError("Network access is disabled for this importer")
+
     sys.addaudithook(deny_network)
     snapshot, snapshot_hash = read_json(args.models)
     catalog, catalog_hash = read_json(args.catalog)
     local, evidence_hash = read_json(args.evidence)
-    merged, access, report = build(snapshot, catalog, local, timestamp(args.observed_at), snapshot_hash, args.repository,
-                                   as_of=timestamp(args.as_of))
+    merged, access, report = build(
+        snapshot,
+        catalog,
+        local,
+        timestamp(args.observed_at),
+        snapshot_hash,
+        args.repository,
+        as_of=timestamp(args.as_of),
+    )
     report["inputSha256"] = {"canonicalCatalog": catalog_hash, "localEvidence": evidence_hash}
     report["repositoryHelpersSha256"] = {
         name: hashlib.sha256((args.repository / "src" / "llm_fallbacks" / name).read_bytes()).hexdigest()
         for name in ("quality.py", "core.py")
     }
-    encoded = [(name, json.dumps(value, indent=2, sort_keys=True, allow_nan=False) + "\n")
-               for name, value in (("catalog.candidate.json", merged), ("access.draft.json", access), ("import-report.json", report))]
+    encoded = [
+        (name, json.dumps(value, indent=2, sort_keys=True, allow_nan=False) + "\n")
+        for name, value in (
+            ("catalog.candidate.json", merged),
+            ("access.draft.json", access),
+            ("import-report.json", report),
+        )
+    ]
     args.output_dir.mkdir(parents=True, exist_ok=True)
     for name, content in encoded:
         (args.output_dir / name).write_text(content)

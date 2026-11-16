@@ -33,7 +33,7 @@ if not importlib.util.find_spec("llm_fallbacks"):
     sys.path.append(str(Path(__file__).parents[1]))
 
 from llm_fallbacks.config import ALL_MODELS, CUSTOM_PROVIDERS, FREE_MODELS, CustomProviderConfig, LiteLLMYAMLConfig
-from llm_fallbacks.core import calculate_cost_per_token, get_model_priority_rank
+from llm_fallbacks.core import get_model_priority_rank
 from llm_fallbacks.quality import compute_quality_score
 
 from llm_fallbacks.pricing import has_explicit_zero_cost

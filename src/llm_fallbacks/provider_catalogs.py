@@ -7,33 +7,77 @@ from typing import Any
 
 
 PROVIDER_CATALOGS = {
-    "openrouter": {"base_url": "https://openrouter.ai/api/v1", "models_url": "https://openrouter.ai/api/v1/models",
-                   "schema": "openai", "auth_env": "OPENROUTER_API_KEY", "auto_fetch_models": False,
-                   "docs": "https://openrouter.ai/docs/api-reference/list-available-models"},
-    "kilo": {"base_url": "https://ai-gateway.kilo.ai/api/v1", "models_url": "https://ai-gateway.kilo.ai/api/v1/models",
-             "schema": "openai", "auth_env": "KILO_API_KEY", "auto_fetch_models": False,
-             "docs": "https://kilo.ai/docs/gateway/api-reference"},
-    "groq": {"base_url": "https://api.groq.com/openai/v1", "models_url": "https://api.groq.com/openai/v1/models",
-             "schema": "openai", "auth_env": "GROQ_API_KEY", "auto_fetch_models": False,
-             "docs": "https://console.groq.com/docs/models"},
-    "cerebras": {"base_url": "https://api.cerebras.ai/v1", "models_url": "https://api.cerebras.ai/v1/models",
-                 "schema": "openai", "auth_env": "CEREBRAS_API_KEY", "auto_fetch_models": False,
-                 "docs": "https://inference-docs.cerebras.ai/api-reference/models/list-models"},
-    "google_ai_studio": {"base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
-                         "models_url": "https://generativelanguage.googleapis.com/v1beta/models",
-                         "schema": "gemini", "auth_env": "GOOGLE_AI_STUDIO_API_KEY", "auto_fetch_models": False,
-                         "docs": "https://ai.google.dev/api/models"},
-    "huggingface": {"base_url": "https://router.huggingface.co/v1", "models_url": "https://router.huggingface.co/v1/models",
-                    "schema": "openai", "auth_env": "HUGGINGFACE_API_KEY", "auto_fetch_models": False,
-                    "docs": "https://huggingface.co/docs/inference-providers/hub-api"},
+    "openrouter": {
+        "base_url": "https://openrouter.ai/api/v1",
+        "models_url": "https://openrouter.ai/api/v1/models",
+        "schema": "openai",
+        "auth_env": "OPENROUTER_API_KEY",
+        "auto_fetch_models": False,
+        "docs": "https://openrouter.ai/docs/api-reference/list-available-models",
+    },
+    "kilo": {
+        "base_url": "https://ai-gateway.kilo.ai/api/v1",
+        "models_url": "https://ai-gateway.kilo.ai/api/v1/models",
+        "schema": "openai",
+        "auth_env": "KILO_API_KEY",
+        "auto_fetch_models": False,
+        "docs": "https://kilo.ai/docs/gateway/api-reference",
+    },
+    "groq": {
+        "base_url": "https://api.groq.com/openai/v1",
+        "models_url": "https://api.groq.com/openai/v1/models",
+        "schema": "openai",
+        "auth_env": "GROQ_API_KEY",
+        "auto_fetch_models": False,
+        "docs": "https://console.groq.com/docs/models",
+    },
+    "cerebras": {
+        "base_url": "https://api.cerebras.ai/v1",
+        "models_url": "https://api.cerebras.ai/v1/models",
+        "schema": "openai",
+        "auth_env": "CEREBRAS_API_KEY",
+        "auto_fetch_models": False,
+        "docs": "https://inference-docs.cerebras.ai/api-reference/models/list-models",
+    },
+    "google_ai_studio": {
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+        "models_url": "https://generativelanguage.googleapis.com/v1beta/models",
+        "schema": "gemini",
+        "auth_env": "GOOGLE_AI_STUDIO_API_KEY",
+        "auto_fetch_models": False,
+        "docs": "https://ai.google.dev/api/models",
+    },
+    "huggingface": {
+        "base_url": "https://router.huggingface.co/v1",
+        "models_url": "https://router.huggingface.co/v1/models",
+        "schema": "openai",
+        "auth_env": "HUGGINGFACE_API_KEY",
+        "auto_fetch_models": False,
+        "docs": "https://huggingface.co/docs/inference-providers/hub-api",
+    },
 }
 PRICE_FIELDS = {
-    "prompt": "input_cost_per_token", "completion": "output_cost_per_token",
-    "image": "input_cost_per_image", "request": "input_cost_per_query",
-    "input_cache_read": "cache_read_input_token_cost", "input_cache_write": "cache_creation_input_token_cost",
+    "prompt": "input_cost_per_token",
+    "completion": "output_cost_per_token",
+    "image": "input_cost_per_image",
+    "request": "input_cost_per_query",
+    "input_cache_read": "cache_read_input_token_cost",
+    "input_cache_write": "cache_creation_input_token_cost",
 }
-MODES = {"chat", "responses", "completion", "embedding", "image_generation", "image_edit",
-         "audio_transcription", "audio_speech", "video_generation", "moderation", "rerank", "search"}
+MODES = {
+    "chat",
+    "responses",
+    "completion",
+    "embedding",
+    "image_generation",
+    "image_edit",
+    "audio_transcription",
+    "audio_speech",
+    "video_generation",
+    "moderation",
+    "rerank",
+    "search",
+}
 
 
 def _positive_integer(value: Any) -> int | None:
@@ -43,8 +87,11 @@ def _positive_integer(value: Any) -> int | None:
 def _openai_spec(provider: str, row: dict[str, Any]) -> dict[str, Any]:
     spec = {"litellm_provider": provider, "upstream_model": row["id"], "mode": "unknown"}
     prices = row.get("pricing")
-    evidence = {"source": "provider-model-catalog", "availability": "listed",
-                "reported_prices": prices if isinstance(prices, dict) else None}
+    evidence = {
+        "source": "provider-model-catalog",
+        "availability": "listed",
+        "reported_prices": prices if isinstance(prices, dict) else None,
+    }
     spec["pricing_evidence"] = evidence
     if isinstance(prices, dict):
         for source, destination in PRICE_FIELDS.items():
@@ -66,9 +113,13 @@ def _openai_spec(provider: str, row: dict[str, Any]) -> dict[str, Any]:
     outputs = architecture.get("output_modalities", [])
     if not isinstance(inputs, list) or not isinstance(outputs, list):
         raise ValueError("Model modalities must be arrays")
-    legacy_modes = {"text+image->text": "chat", "text->text": "chat",
-                    "text->image": "image_generation", "text->embedding": "embedding",
-                    "audio->text": "audio_transcription"}
+    legacy_modes = {
+        "text+image->text": "chat",
+        "text->text": "chat",
+        "text->image": "image_generation",
+        "text->embedding": "embedding",
+        "audio->text": "audio_transcription",
+    }
     if row.get("mode") in MODES:
         spec["mode"] = row["mode"]
     elif architecture.get("modality") in legacy_modes:
@@ -84,16 +135,22 @@ def _openai_spec(provider: str, row: dict[str, Any]) -> dict[str, Any]:
     parameters = row.get("supported_parameters", [])
     if not isinstance(parameters, list) or not all(isinstance(value, str) for value in parameters):
         raise ValueError("Model supported_parameters must be a string array")
-    for capability, parameter in (("supports_function_calling", "tools"), ("supports_tool_choice", "tool_choice"),
-                                  ("supports_response_schema", "structured_outputs")):
+    for capability, parameter in (
+        ("supports_function_calling", "tools"),
+        ("supports_tool_choice", "tool_choice"),
+        ("supports_response_schema", "structured_outputs"),
+    ):
         if "supported_parameters" in row:
             spec[capability] = parameter in parameters
     if "image" in inputs or architecture.get("modality") == "text+image->text":
         spec["supports_vision"] = True
     if "audio" in inputs:
         spec["supports_audio_input"] = True
-    context = (_positive_integer(top.get("context_length")) or _positive_integer(row.get("context_length"))
-               or _positive_integer(row.get("context_window")))
+    context = (
+        _positive_integer(top.get("context_length"))
+        or _positive_integer(row.get("context_length"))
+        or _positive_integer(row.get("context_window"))
+    )
     output = _positive_integer(top.get("max_completion_tokens")) or _positive_integer(row.get("max_completion_tokens"))
     if context:
         spec["max_input_tokens"] = context
@@ -104,7 +161,9 @@ def _openai_spec(provider: str, row: dict[str, Any]) -> dict[str, Any]:
     return spec
 
 
-def parse_openai_models(provider: str, response: dict[str, Any], *, qualify_ids: bool = True) -> dict[str, dict[str, Any]]:
+def parse_openai_models(
+    provider: str, response: dict[str, Any], *, qualify_ids: bool = True
+) -> dict[str, dict[str, Any]]:
     """Preserve structured metadata from an OpenAI-compatible models listing."""
     if not isinstance(response, dict) or response.get("links", {}).get("next"):
         raise ValueError("Complete model pagination before importing the snapshot")
@@ -117,7 +176,12 @@ def parse_openai_models(provider: str, response: dict[str, Any], *, qualify_ids:
             raise ValueError("Model total_count must match the complete snapshot")
     result = {}
     for row in rows:
-        if not isinstance(row, dict) or not isinstance(row.get("id"), str) or not row["id"].strip() or len(row["id"]) > 500:
+        if (
+            not isinstance(row, dict)
+            or not isinstance(row.get("id"), str)
+            or not row["id"].strip()
+            or len(row["id"]) > 500
+        ):
             raise ValueError("Model entries require exact string IDs")
         if row.get("active") is False:
             continue
@@ -128,7 +192,9 @@ def parse_openai_models(provider: str, response: dict[str, Any], *, qualify_ids:
     return result
 
 
-def parse_provider_models(provider: str, response: dict[str, Any], *, qualify_ids: bool = True) -> dict[str, dict[str, Any]]:
+def parse_provider_models(
+    provider: str, response: dict[str, Any], *, qualify_ids: bool = True
+) -> dict[str, dict[str, Any]]:
     """Parse a saved provider response without inferring free account access."""
     if provider not in PROVIDER_CATALOGS or not isinstance(response, dict):
         raise ValueError("Unsupported provider or invalid response")
@@ -151,9 +217,19 @@ def parse_provider_models(provider: str, response: dict[str, Any], *, qualify_id
             if not raw.startswith("models/"):
                 raise ValueError("Gemini model names must use the documented resource prefix")
             raw = raw.removeprefix("models/")
-            spec = {"litellm_provider": provider, "upstream_model": raw,
-                    "pricing_evidence": {"source": "provider-model-catalog", "availability": "listed", "reported_prices": None}}
-            for source, destination in (("inputTokenLimit", "max_input_tokens"), ("outputTokenLimit", "max_output_tokens")):
+            spec = {
+                "litellm_provider": provider,
+                "upstream_model": raw,
+                "pricing_evidence": {
+                    "source": "provider-model-catalog",
+                    "availability": "listed",
+                    "reported_prices": None,
+                },
+            }
+            for source, destination in (
+                ("inputTokenLimit", "max_input_tokens"),
+                ("outputTokenLimit", "max_output_tokens"),
+            ):
                 if _positive_integer(row.get(source)):
                     spec[destination] = row[source]
             methods = row.get("supportedGenerationMethods", [])
@@ -180,9 +256,11 @@ def main():
     parser.add_argument("--snapshot", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
+
     def deny_network(event, _args):
         if event in ("socket.connect", "socket.getaddrinfo", "socket.bind"):
             raise RuntimeError("Provider snapshot parsing is offline")
+
     sys.addaudithook(deny_network)
     with args.snapshot.open("rb") as source:
         raw = source.read(16 * 1024 * 1024 + 1)
