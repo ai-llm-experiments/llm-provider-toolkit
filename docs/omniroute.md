@@ -56,6 +56,8 @@ The adapter writes proposed payloads only. The parent deployment workflow owns i
 
 `llm_fallbacks.provider_catalogs` provides offline snapshot parsers for OpenRouter, Kilo, Groq, Cerebras, Google AI Studio, and Hugging Face. It preserves supported capability and pricing metadata, rejects incomplete pagination, and does not enable accounts or automatically fetch newly registered providers. For example, inspect a trusted saved response with `python -m llm_fallbacks.provider_catalogs --provider kilo --snapshot /path/to/models.json --output /tmp/kilo-catalog.json`.
 
+For several saved snapshots, the [multi-provider pipeline](provider-snapshot-pipeline.md) generates a candidate catalog, evidence draft, proposal, and audit report together. Its registry IDs are not necessarily OmniRoute runtime IDs; reconcile mappings before any import.
+
 Free-only classification requires explicit, complete zero pricing for supported text or embedding contracts. Missing, partial, invalid, or positive pricing is not free. Media and other endpoint shapes are excluded from automatic free classification until their complete pricing contracts are represented. Account tier, quota, privacy, and runtime entitlement require separate current evidence regardless of catalog classification.
 
 ## Import a saved OpenRouter snapshot
