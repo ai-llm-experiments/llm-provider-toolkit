@@ -14,7 +14,7 @@ def get_omniroute_models(base_url: str | None = None, api_key: str | None = None
     if not base_url.endswith('/v1'):
         base_url += '/v1'
     api_key = api_key if api_key is not None else os.environ.get('OMNIROUTE_API_KEY', '')
-    headers = {'Accept': 'application/json'}
+    headers = {'Accept': 'application/json', 'User-Agent': 'llm-fallbacks/0.1'}
     if api_key:
         headers['Authorization'] = 'Bearer ' + api_key
     with urlopen(Request(base_url + '/models', headers=headers), timeout=30) as response:
