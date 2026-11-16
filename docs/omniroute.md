@@ -58,6 +58,8 @@ The adapter writes proposed payloads only. The parent deployment workflow owns i
 
 For several saved snapshots, the [multi-provider pipeline](provider-snapshot-pipeline.md) generates a candidate catalog, evidence draft, proposal, and audit report together. Its registry IDs are not necessarily OmniRoute runtime IDs; reconcile mappings before any import.
 
+The [offline reconciliation planner](omniroute-reconciliation.md) compares an approved proposal with a complete sanitized export and an explicit ownership manifest. It produces reviewable plans only; live API compatibility, admission and executor concurrency still require verification. Model-list changes can clear session history, which configuration rollback cannot recover.
+
 Free-only classification requires explicit, complete zero pricing for supported text or embedding contracts. Missing, partial, invalid, or positive pricing is not free. Media and other endpoint shapes are excluded from automatic free classification until their complete pricing contracts are represented. Account tier, quota, privacy, and runtime entitlement require separate current evidence regardless of catalog classification.
 
 ## Import a saved OpenRouter snapshot
