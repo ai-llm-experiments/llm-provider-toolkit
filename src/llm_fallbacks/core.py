@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from llm_fallbacks.config import LiteLLMBaseModelSpec
 
+from llm_fallbacks.pricing import has_explicit_zero_cost
+
 logger = logging.getLogger(__name__)
 
 PRIORITY_MODEL_ORDER: tuple[str, ...] = ("openrouter/free",)
@@ -243,17 +245,7 @@ def sort_models_by_cost_and_limits(
         if not model.startswith("ollama/")
         and (
             not free_only
-            or all(
-                spec.get(key, 0) == 0
-                for key in [
-                    "input_cost_per_token",
-                    "output_cost_per_token",
-                    "input_cost_per_character",
-                    "output_cost_per_character",
-                    "input_cost_per_second",
-                    "output_cost_per_second",
-                ]
-            )
+            or has_explicit_zero_cost(spec)
         )
     }
 

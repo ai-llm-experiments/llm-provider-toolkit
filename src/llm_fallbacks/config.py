@@ -15,6 +15,9 @@ if __name__ == "__main__":
 
 from llm_fallbacks.core import calculate_cost_per_token, get_litellm_models, sort_models_by_cost_and_limits
 
+from llm_fallbacks.pricing import has_explicit_zero_cost
+from llm_fallbacks.provider_catalogs import parse_openai_models
+
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
@@ -303,13 +306,7 @@ class CustomProviderConfig(BaseProviderConfig):
     def _parse_standard_model_response(
         cls, provider_name: str, requested_models: Dict[str, Any]
     ) -> Dict[str, LiteLLMBaseModelSpec]:
-        data = requested_models.get("data", [])
-        if not isinstance(data, list):
-            return {}
-        parsed_requested_models: Dict[str, LiteLLMBaseModelSpec] = {
-            f"{provider_name}/{model['id']}": {"litellm_provider": provider_name} for model in data
-        }
-        return parsed_requested_models
+        return parse_openai_models(provider_name, requested_models)
 
     def _update_model_specs_with_cost(self, models: Dict[str, LiteLLMBaseModelSpec]):
         for model_name, model_spec in models.items():
@@ -324,14 +321,11 @@ class CustomProviderConfig(BaseProviderConfig):
 
     def _set_free_model_costs(self, models: Dict[str, LiteLLMBaseModelSpec]):
         for model_name, model_spec in models.items():
-            self.model_specs[model_name].setdefault(  # pyright: ignore[reportCallIssue]
-                model_name,  # pyright: ignore[reportArgumentType]
-                model_spec.copy(),  # pyright: ignore[reportArgumentType]
-            ).update(model_spec)
-            if model_name in self.free_models:
-                model_spec.update(self.FREE_COSTS)
-            if calculate_cost_per_token(model_spec) <= 0.0:
-                self.free_models.setdefault(model_name, model_spec.copy()).update(model_spec)
+            self.model_specs[model_name].update(model_spec)
+            if has_explicit_zero_cost(self.model_specs[model_name]):
+                self.free_models[model_name] = self.model_specs[model_name].copy()
+            else:
+                self.free_models.pop(model_name, None)
 
     def _process_requested_models(self, models: Dict[str, LiteLLMBaseModelSpec]):
         parsed_requested_models: Dict[str, LiteLLMBaseModelSpec] = {}
@@ -410,74 +404,9 @@ class CustomProviderConfig(BaseProviderConfig):
 def _parse_openrouter_models_response(
     provider_name: str, requested_models: Dict[str, Any]
 ) -> Dict[str, LiteLLMBaseModelSpec]:
-    data = requested_models.get("data", [])
-    if not isinstance(data, list):
-        return {}
-
-    parsed_requested_models: Dict[str, LiteLLMBaseModelSpec] = {}
-    for model in data:
-        model_id = model.get("id", "")
-        if not model_id:
-            continue
-
-        # start with the main provider's template if exists.
-        model_spec: LiteLLMBaseModelSpec = get_litellm_models().get(model_id, {})
-
-        # Parse pricing information
-        pricing = model.get("pricing", {})
-        if pricing:
-            prompt_cost = pricing.get("prompt", 0)
-            if prompt_cost:
-                model_spec["input_cost_per_token"] = float(prompt_cost)
-            completion_cost = pricing.get("completion", 0)
-            if completion_cost:
-                model_spec["output_cost_per_token"] = float(completion_cost)
-            image_cost = pricing.get("image", 0)
-            if image_cost:
-                model_spec["input_cost_per_image"] = float(image_cost)
-            request_cost = pricing.get("request", 0)
-            if request_cost:
-                model_spec["input_cost_per_query"] = float(request_cost)
-
-        # Parse architecture and modality details
-        arch = model.get("architecture", {})
-        top_provider = model.get("top_provider", {})
-        modality = arch.get("modality", "")
-
-        # Context length and max tokens
-        if top_provider:
-            context_length = top_provider.get("context_length")
-            if context_length:
-                model_spec["max_input_tokens"] = int(context_length)
-            max_completion_tokens = top_provider.get("max_completion_tokens")
-            if max_completion_tokens:
-                model_spec["max_output_tokens"] = int(max_completion_tokens)
-
-        # Modality-specific capabilities
-        if modality == "text+image->text":
-            model_spec["mode"] = "chat"
-            model_spec["supports_vision"] = True
-        elif modality == "text->image":
-            model_spec["mode"] = "image_generation"
-        elif modality == "text->embedding":
-            model_spec["mode"] = "embedding"
-        elif modality == "audio->text":
-            model_spec["mode"] = "audio_transcription"
-
-        # Function calling support
-        if arch.get("instruct_type") == "Function":
-            model_spec["supports_function_calling"] = True
-
-        description = model.get("description", "")
-        if description:
-            model_spec["metadata"] = {"notes": description}
-            if "function call" in description.lower():
-                model_spec["supports_function_calling"] = True
-
-        model_spec["litellm_provider"] = provider_name
-        parsed_requested_models[model_id] = model_spec
-
-    return parsed_requested_models
+    parsed = parse_openai_models(provider_name, requested_models, qualify_ids=False)
+    known = get_litellm_models()
+    return {model_id: {**known.get(model_id, {}), **spec} for model_id, spec in parsed.items()}
 
 
 def _normalize_model_identifier(provider_name: str, model_name: str) -> str:
@@ -512,6 +441,16 @@ if "CUSTOM_PROVIDERS" not in globals():
             provider_name="openrouter",
             base_url="https://openrouter.ai/api/v1",
             api_key_required=False,
+            parse_models_function=_parse_openrouter_models_response,
+        ),
+        # Kilo exposes an OpenAI-compatible catalog. Discovery is explicitly
+        # opt-in and its listing does not establish account eligibility.
+        CustomProviderConfig(
+            provider_name="kilo",
+            base_url="https://ai-gateway.kilo.ai/api/v1",
+            api_env_key_name="KILO_API_KEY",
+            api_key_required=False,
+            auto_fetch_models=False,
             parse_models_function=_parse_openrouter_models_response,
         ),
         CustomProviderConfig(

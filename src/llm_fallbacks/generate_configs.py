@@ -36,6 +36,8 @@ from llm_fallbacks.config import ALL_MODELS, CUSTOM_PROVIDERS, FREE_MODELS, Cust
 from llm_fallbacks.core import calculate_cost_per_token, get_model_priority_rank
 from llm_fallbacks.quality import compute_quality_score
 
+from llm_fallbacks.pricing import has_explicit_zero_cost
+
 logger = logging.getLogger(__name__)
 
 # Providers whose models are local-only (not usable via public API)
@@ -67,7 +69,7 @@ def build_free_models_list(free_models: list[tuple[str, dict[str, Any]]]) -> lis
     """
     entries: list[dict[str, Any]] = []
     for model_id, spec in free_models:
-        if is_local_model(model_id):
+        if is_local_model(model_id) or not has_explicit_zero_cost(spec):
             continue
 
         quality_score, quality_source = compute_quality_score(spec)
@@ -78,12 +80,13 @@ def build_free_models_list(free_models: list[tuple[str, dict[str, Any]]]) -> lis
             "is_free": True,
             "input_cost_per_token": spec.get("input_cost_per_token", 0),
             "output_cost_per_token": spec.get("output_cost_per_token", 0),
-            "pricing_evidence": {
+            "pricing_evidence": spec.get("pricing_evidence", {
                 "source": "registry",
                 "input_cost_present": "input_cost_per_token" in spec,
                 "output_cost_present": "output_cost_per_token" in spec,
                 "requires_live_verification": True,
-            },
+            }),
+            "upstream_model": spec.get("upstream_model", model_id),
             "context_length": spec.get("max_input_tokens") or spec.get("max_tokens") or 0,
             "max_output_tokens": spec.get("max_output_tokens", 0),
             "supports_vision": bool(spec.get("supports_vision", False)),
@@ -322,7 +325,7 @@ def to_litellm_config_yaml(
 
     for p in providers:
         for model_name, model_spec in (p.free_models if free_only else p.model_specs).items():
-            is_free = calculate_cost_per_token(model_spec) <= 0.0
+            is_free = has_explicit_zero_cost(model_spec)
             is_local = (
                 model_name.casefold().startswith("ollama/")
                 or model_name.casefold().startswith("vllm/")

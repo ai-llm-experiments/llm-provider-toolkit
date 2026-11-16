@@ -52,6 +52,12 @@ Proposals use priority routing and enabled account stickiness. Runtime model aff
 
 The adapter writes proposed payloads only. The parent deployment workflow owns import, update/rename compatibility, activation, source review, and live verification. Keep credentials in the existing secret manager and omit them from the access manifest.
 
+## Provider catalog evidence
+
+`llm_fallbacks.provider_catalogs` provides offline snapshot parsers for OpenRouter, Kilo, Groq, Cerebras, Google AI Studio, and Hugging Face. It preserves supported capability and pricing metadata, rejects incomplete pagination, and does not enable accounts or automatically fetch newly registered providers. For example, inspect a trusted saved response with `python -m llm_fallbacks.provider_catalogs --provider kilo --snapshot /path/to/models.json --output /tmp/kilo-catalog.json`.
+
+Free-only classification requires explicit, complete zero pricing for supported text or embedding contracts. Missing, partial, invalid, or positive pricing is not free. Media and other endpoint shapes are excluded from automatic free classification until their complete pricing contracts are represented. Account tier, quota, privacy, and runtime entitlement require separate current evidence regardless of catalog classification.
+
 ## Import a saved OpenRouter snapshot
 
 The optional offline importer refreshes candidate metadata from a saved public OpenRouter models response and combines it with a credential-free evidence file. It calls the scoring helpers from the repository path supplied by the operator; only point it at trusted code. It does not fetch the snapshot, contact providers, or change routes.
