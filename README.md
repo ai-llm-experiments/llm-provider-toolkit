@@ -222,3 +222,11 @@ Pull requests welcome.
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+### OmniRoute catalog and sorting
+
+Set `OMNIROUTE_BASE_URL` and optionally `OMNIROUTE_API_KEY` to use the live OmniRoute catalog in existing model filters. Exact gateway IDs and metadata are preserved. A configured gateway error is surfaced so a different catalog cannot silently replace it.
+
+For a Python-only catalog sort, run `python -m llm_fallbacks.omniroute` (or add `--live-catalog`) with those environment variables, or call `get_omniroute_models` and `sort_omniroute_models` directly. This path uses the standard library. It sorts only the listing. OmniRoute owns provider selection, combo targets and failover execution. Entries with unknown prices sort after entries with advertised prices.
+
+The existing `--catalog`, `--access`, `--as-of` and `--output` arguments select the offline proposal mode described above. Importing either adapter remains lazy; the live catalog is fetched only when requested.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate reviewable OmniRoute combos from the catalog and verified access.
+"""Read the live OmniRoute catalog or propose combos from verified access.
 
 Run with ``python -m llm_fallbacks.omniroute --help``.
 """
@@ -10,10 +10,65 @@ import argparse
 import hashlib
 import json
 import math
+import os
+import sys
 import re
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
+from urllib.request import Request, urlopen
+
+def get_omniroute_models(base_url: str | None = None, api_key: str | None = None) -> dict[str, dict[str, Any]]:
+    base_url = (base_url or os.environ.get('OMNIROUTE_BASE_URL', '')).rstrip('/')
+    if not base_url:
+        raise ValueError('Set OMNIROUTE_BASE_URL or pass base_url.')
+    if not base_url.endswith('/v1'):
+        base_url += '/v1'
+    api_key = api_key if api_key is not None else os.environ.get('OMNIROUTE_API_KEY', '')
+    headers = {'Accept': 'application/json', 'User-Agent': 'llm-fallbacks/0.1'}
+    if api_key:
+        headers['Authorization'] = 'Bearer ' + api_key
+    with urlopen(Request(base_url + '/models', headers=headers), timeout=30) as response:
+        catalog = json.load(response)['data']
+    return {entry['id']: dict(entry) for entry in catalog}
+
+
+def sort_omniroute_models(models: dict[str, dict[str, Any]]) -> list[tuple[str, dict[str, Any]]]:
+    """Rank catalog entries by advertised token price, then context size.
+
+    Missing prices sort last. Configured combo target order and strategies remain
+    owned by OmniRoute. This function only sorts the caller's catalog listing.
+    """
+    def key(item: tuple[str, dict[str, Any]]) -> tuple[float, int, str]:
+        name, spec = item
+        pricing = spec.get('pricing') or {}
+        prompt = pricing.get('prompt', spec.get('input_cost_per_token'))
+        completion = pricing.get('completion', spec.get('output_cost_per_token'))
+        try:
+            cost = float(prompt) + float(completion) if prompt is not None and completion is not None else float('inf')
+        except (ValueError, TypeError):
+            cost = float('inf')
+        context = int(spec.get('context_length') or spec.get('max_input_tokens') or 0)
+        return cost, -context, name
+    return sorted(models.items(), key=key)
+
+
+def as_model_specs(models: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Adapt capabilities for existing filters while preserving exact IDs and metadata."""
+    result = {}
+    for name, original in models.items():
+        spec = dict(original)
+        kind = spec.get('type', 'chat')
+        spec['mode'] = {'image': 'image_generation', 'video': 'video_generation'}.get(kind, kind)
+        spec['litellm_provider'] = spec.get('owned_by', '')
+        spec['max_input_tokens'] = spec.get('max_input_tokens') or spec.get('context_length', 0)
+        capabilities = spec.get('capabilities') or {}
+        spec['supports_function_calling'] = capabilities.get('tool_calling', False)
+        spec['supports_vision'] = capabilities.get('vision', False)
+        result[name] = spec
+    return result
+
 
 MAX_INPUT_BYTES = 16 * 1024 * 1024
 MAX_ROWS = 20_000
@@ -460,14 +515,22 @@ def generate(catalog, policy, as_of: datetime, catalog_hash: str, policy_hash: s
     }
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+def main(argv: list[str] | None = None):
+    argv = sys.argv[1:] if argv is None else argv
+    # Preserve upstream's no-argument live listing and the proposal CLI's flags.
+    if not argv or argv == ["--live-catalog"]:
+        print(json.dumps(dict(sort_omniroute_models(get_omniroute_models())), indent=2))
+        return
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        epilog="With no arguments (or --live-catalog), list the live catalog using OMNIROUTE_BASE_URL.",
+    )
     parser.add_argument("--catalog", type=Path, required=True)
     parser.add_argument("--access", type=Path, required=True)
     parser.add_argument("--privacy-provenance", type=Path)
     parser.add_argument("--as-of", required=True, help="Explicit ISO timestamp makes output reproducible")
     parser.add_argument("--output", type=Path, required=True)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     catalog, catalog_hash = read_json(args.catalog)
     policy, policy_hash = read_json(args.access)
     privacy_provenance, privacy_hash = read_json(args.privacy_provenance) if args.privacy_provenance else (None, None)
