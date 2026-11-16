@@ -1,6 +1,6 @@
 # Offline multi-provider route pipeline
 
-`scripts/import_provider_snapshots.py` consumes saved snapshots for any configured `provider_catalogs.PROVIDER_CATALOGS` parser in llm_fallbacks. The current registry includes Kilo, OpenRouter, Groq, Cerebras, Google AI Studio and Hugging Face. The parser and pricing implementation come from the selected repository, with helper hashes recorded in the report. It loads pure files directly and skips package/config discovery. Its CLI denies networking.
+`scripts/import_provider_snapshots.py` consumes saved snapshots for any configured `provider_catalogs.PROVIDER_CATALOGS` parser in llm_fallbacks. The current registry includes Kilo, OpenRouter, Groq, Cerebras, Google AI Studio, Hugging Face, Mistral and Cohere. The parser and pricing implementation come from the selected repository, with helper hashes recorded in the report. It loads pure files directly and skips package/config discovery. Its CLI denies networking.
 
 Run from the repository root with explicit paths and evaluation time.
 
@@ -92,3 +92,36 @@ Nested purpose evidence accepts known route-purpose keys with nonblank string re
 Catalog and access hashes in `proposal.json` use the exact UTF-8 bytes emitted to their respective files, including indentation and final newline. The same serialization function produces both artifacts and their hashes.
 
 Additional inline adversarial checks reject malformed provider price metadata and nested credential-shaped objects in purpose evidence, embedding space, priority, route name, endpoint/purpose arrays and flags. Absent/null pricing with explicit fresh proof retains the valid baseline, while partial pricing remains excluded. Exact-byte catalog/access hash comparisons pass with networking denied.
+
+
+## Mistral and Cohere discovery
+
+The Mistral parser consumes a complete `data` model list, preserves explicit chat, function-calling and vision declarations, and excludes archived models. Combined context windows remain `context_window` metadata. They are not converted to an available input-token allowance. Prices absent from the catalog remain unknown. Mistral's free evaluation mode still requires account-specific entitlement and enforcement evidence. Its `labs-` model identifiers receive a conservative prompt-use flag because the documented lifecycle contract does not support data-collection opt-out. Labs models can change silently and are unsuitable for the stable default lane. The parser does not manufacture zero prices from their names. [Model catalog](https://docs.mistral.ai/api/endpoint/models), [API limits](https://help.mistral.ai/en/articles/698531-why-am-i-hitting-api-rate-limits-and-how-do-i-increase-them), [Lifecycle contract](https://docs.mistral.ai/inference/model-lifecycle)
+
+The Cohere parser consumes a complete `models` list and rejects a remaining `next_page_token`. It preserves exact names and compatible endpoints and excludes deprecated models. A single unambiguous supported endpoint mode can populate `mode`. Mixed or unrecognized endpoint modes remain unknown. Trial keys provide limited free access, while production keys have different billing. The model list does not identify the connected key's tier or provide complete prices, so account and pricing evidence remain required. Combined context windows are retained separately from input-token limits. [Model catalog](https://docs.cohere.com/v2/reference/list-models), [Key types and limits](https://docs.cohere.com/docs/rate-limits)
+
+The route adapter rejects a `private-approved` operator label when a canonical catalog explicitly says prompts may be used for training. A `public-demo` route still requires all existing account, cost, capability, privacy and live-request evidence. Missing privacy remains unadmitted, and malformed catalog training flags are rejected by admission.
+
+GitHub Models is retained in the repository's older provider URL inventory, but the official service has been retired since July 30, 2026. Its catalog, inference and BYOK are unavailable. This expansion does not add a retired-service parser or alter existing client aliases. GitHub Copilot is a different service. [GitHub retirement notice](https://docs.github.com/en/github-models)
+
+
+## Stable catalog privacy provenance
+
+The standard `generate_configs` export keeps the existing 19-field `free_models.json` rows and writes a companion `free_models.provenance.json`. The sidecar records the exact catalog byte SHA-256, generation timestamp, and every exact provider/model identity with its original boolean prompt-training metadata or `null` for unknown. It does not infer a false flag from a missing field.
+
+When proposing routes from that standard catalog, pass both files to the adapter.
+
+```bash
+python -m llm_fallbacks.omniroute \
+  --catalog /path/to/free_models.json \
+  --privacy-provenance /path/to/free_models.provenance.json \
+  --access /path/to/access.json \
+  --as-of 2026-11-16T00:00:00Z \
+  --output /path/to/proposal.json
+```
+
+The sidecar must match the catalog hash, cover the complete exact identity set without duplicates, and fall inside the same freshness window as admission evidence. Unsupported fields, malformed flags, and conflicting rich-catalog metadata reject the run. The proposal records both the canonical sidecar digest and its exact file digest. Generation time records when metadata was exported. It does not establish that the provider's contract was independently reverified then. Current account/model verification and their receipt references are still required. Provenance input must come from the trusted catalog build, since these hashes detect mismatched artifacts rather than authenticate the source.
+
+A `private-approved` target requires explicit `may_train_on_prompts=false` in a rich canonical row or matching sidecar. A label without that source metadata stays excluded. A true flag cannot be relabeled private by access evidence, and unknown metadata remains excluded from private routing. An explicitly approved public-demo target can retain unknown training metadata because it already requires public prompts and the existing admission evidence. Unknown privacy classification remains excluded from every route.
+
+The offline snapshot pipeline preserves rich parser metadata in its candidate catalog and can therefore retain explicit training flags directly. A provider whose catalog offers no prompt-use information needs a separately verified source contract before a private route can be admitted. Existing saved catalog files require regeneration of the companion sidecar from their source specifications. Manually reconstructing a false flag from an omitted field would defeat this boundary.

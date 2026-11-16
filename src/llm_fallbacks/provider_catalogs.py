@@ -54,6 +54,22 @@ PROVIDER_CATALOGS = {
         "auto_fetch_models": False,
         "docs": "https://huggingface.co/docs/inference-providers/hub-api",
     },
+    "mistral": {
+        "base_url": "https://api.mistral.ai/v1",
+        "models_url": "https://api.mistral.ai/v1/models",
+        "schema": "mistral",
+        "auth_env": "MISTRAL_API_KEY",
+        "auto_fetch_models": False,
+        "docs": "https://docs.mistral.ai/api/endpoint/models",
+    },
+    "cohere": {
+        "base_url": "https://api.cohere.com/v2",
+        "models_url": "https://api.cohere.com/v1/models",
+        "schema": "cohere",
+        "auth_env": "COHERE_API_KEY",
+        "auto_fetch_models": False,
+        "docs": "https://docs.cohere.com/v2/reference/list-models",
+    },
 }
 PRICE_FIELDS = {
     "prompt": "input_cost_per_token",
@@ -197,7 +213,12 @@ def parse_provider_models(
     """Parse a saved provider response without inferring free account access."""
     if provider not in PROVIDER_CATALOGS or not isinstance(response, dict):
         raise ValueError("Unsupported provider or invalid response")
-    google = PROVIDER_CATALOGS[provider]["schema"] == "gemini"
+    schema = PROVIDER_CATALOGS[provider]["schema"]
+    if schema == "mistral":
+        return _parse_mistral_models(response, qualify_ids=qualify_ids)
+    if schema == "cohere":
+        return _parse_cohere_models(response, qualify_ids=qualify_ids)
+    google = schema == "gemini"
     if not google:
         return parse_openai_models(provider, response, qualify_ids=qualify_ids)
     if response.get("nextPageToken") or response.get("links", {}).get("next"):
@@ -241,6 +262,90 @@ def parse_provider_models(
         if key in result:
             raise ValueError("Duplicate provider model ID")
         result[key] = spec
+    return result
+
+
+def _parse_mistral_models(response: dict[str, Any], *, qualify_ids: bool) -> dict[str, dict[str, Any]]:
+    """Retain documented model capabilities without assigning an account price."""
+    result = parse_openai_models("mistral", response, qualify_ids=qualify_ids)
+    seen = set()
+    for row in response["data"]:
+        if row["id"] in seen:
+            raise ValueError("Duplicate Mistral model ID")
+        seen.add(row["id"])
+        key = f"mistral/{row['id']}" if qualify_ids else row["id"]
+        if "archived" in row and type(row["archived"]) is not bool:
+            raise ValueError("Mistral archived must be a boolean")
+        if row.get("archived") is True:
+            result.pop(key, None)
+            continue
+        if key not in result:
+            continue
+        capabilities = row.get("capabilities", {})
+        if not isinstance(capabilities, dict):
+            raise ValueError("Mistral capabilities must be an object")
+        spec = result[key]
+        if row["id"].startswith("labs-"):
+            # The documented Labs contract does not offer data-collection opt-out.
+            spec["may_train_on_prompts"] = True
+            spec["privacy_evidence"] = {
+                "source": "https://docs.mistral.ai/inference/model-lifecycle",
+                "data_collection_opt_out": False,
+                "lifecycle": "labs",
+            }
+        for source, destination in (("function_calling", "supports_function_calling"), ("vision", "supports_vision")):
+            if source in capabilities:
+                if type(capabilities[source]) is not bool:
+                    raise ValueError("Mistral capabilities must contain booleans")
+                spec[destination] = capabilities[source]
+        if "completion_chat" in capabilities:
+            if type(capabilities["completion_chat"]) is not bool:
+                raise ValueError("Mistral completion_chat must be a boolean")
+            if capabilities["completion_chat"]:
+                spec["mode"] = "chat"
+        context = _positive_integer(row.get("max_context_length")) or spec.pop("max_input_tokens", None)
+        spec.pop("max_input_tokens", None)
+        if context:
+            # Mistral documents a combined input/output window, not an input allowance.
+            spec["context_window"] = context
+    return result
+
+
+def _parse_cohere_models(response: dict[str, Any], *, qualify_ids: bool) -> dict[str, dict[str, Any]]:
+    """Parse complete Cohere model listings while leaving prices unverified."""
+    if response.get("next_page_token"):
+        raise ValueError("Complete Cohere pagination before importing the snapshot")
+    rows = response.get("models")
+    if not isinstance(rows, list) or len(rows) > 20_000:
+        raise ValueError("Cohere model response must contain a bounded array")
+    normalized = []
+    endpoints_by_id = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError("Cohere model entries must be objects")
+        name = row.get("name")
+        if not isinstance(name, str) or not name.strip() or len(name) > 500:
+            raise ValueError("Cohere model entries require exact string names")
+        if name in endpoints_by_id:
+            raise ValueError("Duplicate Cohere model name")
+        if "is_deprecated" in row and type(row["is_deprecated"]) is not bool:
+            raise ValueError("Cohere is_deprecated must be a boolean")
+        endpoints = row.get("endpoints", [])
+        if not isinstance(endpoints, list) or not all(isinstance(value, str) for value in endpoints):
+            raise ValueError("Cohere endpoints must be a string array")
+        normalized.append({**row, "id": name, "active": row.get("is_deprecated") is not True})
+        endpoints_by_id[name] = endpoints
+    result = parse_openai_models("cohere", {"data": normalized}, qualify_ids=qualify_ids)
+    endpoint_modes = {"chat": "chat", "generate": "completion", "embed": "embedding", "rerank": "rerank"}
+    for spec in result.values():
+        endpoints = endpoints_by_id[spec["upstream_model"]]
+        spec["supported_endpoints"] = endpoints
+        context = spec.pop("max_input_tokens", None)
+        if context:
+            spec["context_window"] = context
+        modes = {endpoint_modes[value] for value in endpoints if value in endpoint_modes}
+        if len(modes) == 1 and all(value in endpoint_modes for value in endpoints):
+            spec["mode"] = modes.pop()
     return result
 
 

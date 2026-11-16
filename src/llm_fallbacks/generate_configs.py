@@ -18,12 +18,14 @@ Artifacts produced (all written to *output-dir*):
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import json
 import logging
 import os
 import uuid
 
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -106,6 +108,36 @@ def _is_chat_capable_for_alias(mode: str, model_id: str, deployable_model_names:
     if mode == "chat":
         return True
     return mode == "" and model_id in deployable_model_names
+
+
+def build_privacy_provenance(
+    free_models: list[tuple[str, dict[str, Any]]],
+    catalog: list[dict[str, Any]],
+    catalog_bytes: bytes,
+    generated_at: str,
+) -> dict[str, Any]:
+    """Keep explicit privacy metadata beside the stable public catalog schema."""
+    source = {}
+    included = {(row["provider"], row["id"]) for row in catalog}
+    for model_id, spec in free_models:
+        identity = (spec.get("litellm_provider", ""), model_id)
+        if identity not in included:
+            continue
+        if identity in source:
+            raise ValueError("Duplicate model identity in privacy provenance")
+        flag = spec.get("may_train_on_prompts")
+        if flag is not None and type(flag) is not bool:
+            raise ValueError("Prompt-training metadata must be boolean or unknown")
+        source[identity] = flag
+    return {
+        "version": 1,
+        "catalogSha256": hashlib.sha256(catalog_bytes).hexdigest(),
+        "generatedAt": generated_at,
+        "models": [
+            {"provider": row["provider"], "id": row["id"], "mayTrainOnPrompts": source[row["provider"], row["id"]]}
+            for row in catalog
+        ],
+    }
 
 
 def build_provider_urls(providers: list[CustomProviderConfig]) -> dict[str, str]:
@@ -460,7 +492,14 @@ def generate(output_dir: str = "configs", *, deploy_mode: bool = False) -> None:
     free_models_list = build_free_models_list(FREE_MODELS)
     free_models_path = out / "free_models.json"
     logger.info("Writing %s (%d models)", free_models_path, len(free_models_list))
-    free_models_path.write_text(json.dumps(free_models_list, indent=2, ensure_ascii=True))
+    catalog_bytes = json.dumps(free_models_list, indent=2, ensure_ascii=True).encode("utf-8")
+    free_models_path.write_bytes(catalog_bytes)
+    privacy_provenance = build_privacy_provenance(
+        FREE_MODELS, free_models_list, catalog_bytes, datetime.now(timezone.utc).isoformat()
+    )
+    provenance_path = out / "free_models.provenance.json"
+    logger.info("Writing %s", provenance_path)
+    provenance_path.write_text(json.dumps(privacy_provenance, indent=2, ensure_ascii=True) + "\n")
 
     # 5. free_models_ids.txt
     free_ids_path = out / "free_models_ids.txt"

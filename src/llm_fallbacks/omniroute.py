@@ -158,6 +158,55 @@ def validate_policy(catalog, policy):
     return attestations, age_hours, supported, requested_attempts, deadline_ms, provider_mappings
 
 
+def catalog_privacy_provenance(catalog, provenance, catalog_hash, as_of, age_hours):
+    """Join exact, hash-bound source privacy metadata without changing public rows."""
+    if provenance is None:
+        return catalog
+    if (
+        not isinstance(provenance, dict)
+        or set(provenance) != {"version", "catalogSha256", "generatedAt", "models"}
+        or type(provenance.get("version")) is not int
+        or provenance["version"] != 1
+        or not isinstance(provenance.get("catalogSha256"), str)
+        or not re.fullmatch(r"[a-f0-9]{64}", provenance["catalogSha256"])
+        or provenance.get("catalogSha256") != catalog_hash
+    ):
+        raise ValueError("Privacy provenance must match the exact catalog and version")
+    generated = moment(text(provenance.get("generatedAt"), "privacy generatedAt"))
+    age = (as_of - generated).total_seconds() / 3600
+    if age < 0 or age > age_hours:
+        raise ValueError("Privacy provenance is outside the freshness window")
+    rows = provenance.get("models")
+    if not isinstance(rows, list) or len(rows) != len(catalog) or len(rows) > MAX_ROWS:
+        raise ValueError("Privacy provenance must cover the complete catalog")
+    flags = {}
+    for row in rows:
+        if not isinstance(row, dict) or set(row) != {"provider", "id", "mayTrainOnPrompts"}:
+            raise ValueError("Privacy provenance rows have unsupported fields")
+        identity = (text(row.get("provider"), "privacy provider"), text(row.get("id"), "privacy id"))
+        flag = row["mayTrainOnPrompts"]
+        if identity in flags or (flag is not None and type(flag) is not bool):
+            raise ValueError("Privacy provenance requires unique identities and boolean or unknown flags")
+        flags[identity] = flag
+    result = []
+    identities = set()
+    for row in catalog:
+        if not isinstance(row, dict):
+            raise ValueError("Catalog rows must be objects")
+        identity = (text(row.get("provider"), "catalog provider"), text(row.get("id"), "catalog id"))
+        if identity in identities or identity not in flags:
+            raise ValueError("Privacy provenance identities must match the catalog exactly")
+        identities.add(identity)
+        flag = flags[identity]
+        if "may_train_on_prompts" in row and flag is not None and row["may_train_on_prompts"] is not flag:
+            raise ValueError("Catalog and privacy provenance conflict")
+        enriched = dict(row)
+        if flag is not None:
+            enriched["may_train_on_prompts"] = flag
+        result.append(enriched)
+    return result
+
+
 def target_admission(target, provider, model_id, node, model, row, provider_mappings, as_of, age_hours):
     reasons = []
     if not is_exact_target(model_id) or not is_exact_target(model):
@@ -197,6 +246,14 @@ def target_admission(target, provider, model_id, node, model, row, provider_mapp
     privacy = target.get("privacy")
     if privacy not in ("private-approved", "public-demo"):
         reasons.append("privacy-unclassified")
+    if privacy == "private-approved" and (row is None or row.get("may_train_on_prompts") is not False):
+        reasons.append("privacy-training-contract-unverified")
+    if row is not None and "may_train_on_prompts" in row:
+        training = row["may_train_on_prompts"]
+        if type(training) is not bool:
+            reasons.append("catalog-privacy-evidence-invalid")
+        elif training and privacy == "private-approved":
+            reasons.append("catalog-training-conflicts-with-private-route")
     purposes = target.get("purposes", [])
     if not isinstance(purposes, list) or not purposes or any(x not in ROUTES for x in purposes):
         reasons.append("purpose-unclassified")
@@ -254,10 +311,11 @@ def route_admission(row, target, purpose, privacy, supported):
     return endpoint, rejected, route_name, embedding_fingerprint
 
 
-def generate(catalog, policy, as_of: datetime, catalog_hash: str, policy_hash: str):
+def generate(catalog, policy, as_of: datetime, catalog_hash: str, policy_hash: str, privacy_provenance=None):
     attestations, age_hours, supported, requested_attempts, deadline_ms, provider_mappings = validate_policy(
         catalog, policy
     )
+    catalog = catalog_privacy_provenance(catalog, privacy_provenance, catalog_hash, as_of, age_hours)
     index = {}
     catalog_rank = {}
     for rank, row in enumerate(catalog):
@@ -378,6 +436,15 @@ def generate(catalog, policy, as_of: datetime, catalog_hash: str, policy_hash: s
             "catalogSha256": catalog_hash,
             "policySha256": policy_hash,
             "catalogRows": len(catalog),
+            **(
+                {
+                    "privacyProvenanceCanonicalSha256": hashlib.sha256(
+                        json.dumps(privacy_provenance, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+                    ).hexdigest()
+                }
+                if privacy_provenance is not None
+                else {}
+            ),
             "ranking": "priority, canonical catalog order, provider, model",
         },
         "proposedCombos": combos,
@@ -390,12 +457,16 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--catalog", type=Path, required=True)
     parser.add_argument("--access", type=Path, required=True)
+    parser.add_argument("--privacy-provenance", type=Path)
     parser.add_argument("--as-of", required=True, help="Explicit ISO timestamp makes output reproducible")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     catalog, catalog_hash = read_json(args.catalog)
     policy, policy_hash = read_json(args.access)
-    proposal = generate(catalog, policy, moment(args.as_of), catalog_hash, policy_hash)
+    privacy_provenance, privacy_hash = read_json(args.privacy_provenance) if args.privacy_provenance else (None, None)
+    proposal = generate(catalog, policy, moment(args.as_of), catalog_hash, policy_hash, privacy_provenance)
+    if args.privacy_provenance:
+        proposal["source"]["privacyProvenanceSha256"] = privacy_hash
     encoded = json.dumps(proposal, indent=2, sort_keys=True, allow_nan=False) + "\n"
     temporary = args.output.with_suffix(args.output.suffix + ".tmp")
     temporary.write_text(encoded)
