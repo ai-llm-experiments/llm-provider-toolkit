@@ -123,6 +123,30 @@ PROVIDER_CATALOGS = {
         "auto_fetch_models": False,
         "docs": "https://docs.tokenfactory.nebius.com/api-reference/models/list-models",
     },
+    "chutes": {
+        "base_url": "https://llm.chutes.ai/v1",
+        "models_url": "https://llm.chutes.ai/v1/models",
+        "schema": "chutes",
+        "auth_env": "CHUTES_API_KEY",
+        "auto_fetch_models": False,
+        "docs": "https://www.chutes.ai/docs/help/faq",
+    },
+    "deepseek": {
+        "base_url": "https://api.deepseek.com",
+        "models_url": "https://api.deepseek.com/models",
+        "schema": "deepseek",
+        "auth_env": "DEEPSEEK_API_KEY",
+        "auto_fetch_models": False,
+        "docs": "https://api-docs.deepseek.com/api/list-models/",
+    },
+    "opencode_zen": {
+        "base_url": "https://opencode.ai/inference",
+        "models_url": "https://opencode.ai/inference/v1/models",
+        "schema": "opencode",
+        "auth_env": "OPENCODE_API_KEY",
+        "auto_fetch_models": False,
+        "docs": "https://opencode.ai/docs/console/api/inference",
+    },
 }
 PRICE_FIELDS = {
     "prompt": "input_cost_per_token",
@@ -315,6 +339,12 @@ def parse_provider_models(
         return _parse_sambanova_models(response, qualify_ids=qualify_ids)
     if schema == "nebius":
         return _parse_nebius_models(response, qualify_ids=qualify_ids)
+    if schema == "chutes":
+        return _parse_chutes_models(response, qualify_ids=qualify_ids)
+    if schema == "deepseek":
+        return _parse_deepseek_models(response, qualify_ids=qualify_ids)
+    if schema == "opencode":
+        return _parse_opencode_models(response, qualify_ids=qualify_ids)
     google = schema == "gemini"
     if not google:
         return parse_openai_models(provider, response, qualify_ids=qualify_ids)
@@ -667,6 +697,166 @@ def _parse_nebius_models(response: dict[str, Any], *, qualify_ids: bool) -> dict
             spec["context_window"] = context
         spec["catalog_evidence"] = {"status": status, "supported_features": features}
         key = f"nebius/{name}" if qualify_ids else name
+        result[key] = spec
+    return result
+
+
+def _string_array(value: Any, label: str) -> list[str]:
+    if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
+        raise ValueError(f"{label} must be a string array")
+    return value
+
+
+def _declared_modalities(row: dict[str, Any]) -> dict[str, Any]:
+    architecture = {}
+    for source, destination in (("input_modalities", "input_modalities"), ("output_modalities", "output_modalities")):
+        if source in row:
+            architecture[destination] = _string_array(row[source], source)
+    return architecture
+
+
+def _parse_chutes_models(response: dict[str, Any], *, qualify_ids: bool) -> dict[str, dict[str, Any]]:
+    """Normalize the hosted catalog's documented per-million USD quote."""
+    result = {}
+    seen: set[str] = set()
+    for row in _complete_catalog_rows(response, "data"):
+        name = _catalog_identity(row, "id", seen)
+        price = row.get("price")
+        if price is not None and not isinstance(price, dict):
+            raise ValueError("Chutes price must be an object or unknown")
+        alternate = row.get("pricing")
+        if alternate is not None and not isinstance(alternate, dict):
+            raise ValueError("Chutes alternate pricing must be an object or unknown")
+        quoted = {}
+        additional_quotes = {}
+        if isinstance(price, dict):
+            for field, value in price.items():
+                if not isinstance(field, str) or not isinstance(value, dict):
+                    raise ValueError("Chutes prices require currency quote objects")
+                # USD quotes are documented per million tokens. Missing USD
+                # and additional charges remain visible to the zero-cost gate.
+                quoted[field] = value.get("usd")
+                for currency, amount in value.items():
+                    if not isinstance(currency, str):
+                        raise ValueError("Chutes currency names must be strings")
+                    if currency != "usd":
+                        # Structured keys preserve arbitrary field/currency pairs
+                        # without collisions between separators in either name.
+                        identity = json.dumps(["currency", field, currency], ensure_ascii=False, separators=(",", ":"))
+                        additional_quotes[identity] = amount
+        normalized = {"id": name, "architecture": _declared_modalities(row)}
+        spec = _openai_spec("chutes", normalized)
+        if price is not None or alternate is not None:
+            prices = _together_text_prices(quoted) if price is not None else {}
+            if "provider_input_cache_read" in prices:
+                cache = _together_text_prices({"input": prices.pop("provider_input_cache_read")})
+                prices["input_cache_read"] = cache["prompt"]
+            prices.update(additional_quotes)
+            if alternate is not None:
+                # An undocumented parallel quote cannot override the documented
+                # price object or disappear when the primary quote is missing.
+                identity = json.dumps(["quote", "pricing"], separators=(",", ":"))
+                prices[identity] = alternate
+            priced = _openai_spec("chutes", {"id": name, "pricing": prices})
+            spec.update({key: value for key, value in priced.items() if key in PRICE_FIELDS.values()})
+            spec["pricing_evidence"]["reported_prices"] = prices
+        spec["pricing_evidence"]["reported_provider_prices"] = price
+        spec["pricing_evidence"]["reported_alternate_prices"] = alternate
+        spec["pricing_evidence"]["token_price_unit"] = "USD per million tokens"
+        features = _string_array(row.get("supported_features", []), "Chutes supported_features")
+        if "supported_features" in row:
+            spec["supports_function_calling"] = "tools" in features
+            spec["supports_response_schema"] = "structured_outputs" in features
+        context = _positive_integer(row.get("context_length")) or _positive_integer(row.get("max_model_len"))
+        output = _positive_integer(row.get("max_output_length"))
+        if context:
+            spec["context_window"] = context
+        if output:
+            spec["max_output_tokens"] = output
+        confidential = row.get("confidential_compute")
+        if confidential is not None and type(confidential) is not bool:
+            raise ValueError("Chutes confidential_compute must be boolean or unknown")
+        spec["catalog_evidence"] = {"confidential_compute": confidential, "supported_features": features}
+        key = f"chutes/{name}" if qualify_ids else name
+        result[key] = spec
+    return result
+
+
+def _parse_deepseek_models(response: dict[str, Any], *, qualify_ids: bool) -> dict[str, dict[str, Any]]:
+    """Preserve current DeepSeek metadata without supplying absent prices."""
+    result = {}
+    seen: set[str] = set()
+    for row in _complete_catalog_rows(response, "data"):
+        name = _catalog_identity(row, "id", seen)
+        spec = _openai_spec("deepseek", {"id": name, "architecture": _declared_modalities(row)})
+        context = _positive_integer(row.get("context_window"))
+        output = _positive_integer(row.get("max_output_tokens"))
+        if context:
+            spec["context_window"] = context
+        if output:
+            spec["max_output_tokens"] = output
+        effort = row.get("effort")
+        if effort is not None:
+            if not isinstance(effort, dict):
+                raise ValueError("DeepSeek effort must be an object")
+            levels = _string_array(effort.get("supported_levels"), "DeepSeek effort levels")
+            if effort.get("default_level") is not None and effort["default_level"] not in levels:
+                raise ValueError("DeepSeek default effort must be a supported level")
+        capabilities = row.get("api_capabilities")
+        if capabilities is not None and not isinstance(capabilities, dict):
+            raise ValueError("DeepSeek protocol capabilities must be an object")
+        spec["catalog_evidence"] = {"effort": effort, "api_capabilities": capabilities}
+        key = f"deepseek/{name}" if qualify_ids else name
+        result[key] = spec
+    return result
+
+
+def _parse_opencode_models(response: dict[str, Any], *, qualify_ids: bool) -> dict[str, dict[str, Any]]:
+    """Read discovery metadata while withholding unsupported external free access."""
+    result = {}
+    seen: set[str] = set()
+    for row in _complete_catalog_rows(response, "data"):
+        name = _catalog_identity(row, "id", seen)
+        modalities = row.get("modalities", {})
+        limits = row.get("limit", {})
+        capabilities = row.get("capabilities", {})
+        apis = row.get("api", {})
+        if not all(isinstance(value, dict) for value in (modalities, limits, capabilities, apis)):
+            raise ValueError("OpenCode model metadata must contain objects")
+        normalized = {"id": name}
+        modality_row = {key + "_modalities": value for key, value in modalities.items() if key in ("input", "output")}
+        normalized["architecture"] = _declared_modalities(modality_row)
+        spec = _openai_spec("opencode_zen", normalized)
+        for source, destination in (
+            ("context", "context_window"),
+            ("input", "max_input_tokens"),
+            ("output", "max_output_tokens"),
+        ):
+            if _positive_integer(limits.get(source)):
+                spec[destination] = limits[source]
+        for source, destination in (("tools", "supports_function_calling"), ("reasoning", "supports_reasoning")):
+            if source in capabilities:
+                declaration = capabilities[source]
+                if not isinstance(declaration, dict) or type(declaration.get("supported")) is not bool:
+                    raise ValueError("OpenCode capabilities require explicit supported booleans")
+                spec[destination] = declaration["supported"]
+        if "structured_output" in capabilities:
+            if type(capabilities["structured_output"]) is not bool:
+                raise ValueError("OpenCode structured_output must be boolean")
+            spec["supports_response_schema"] = capabilities["structured_output"]
+        # The model listing's nested prices include protocol and time/context
+        # variations. Preserve them without guessing a complete pricing contract.
+        cost = row.get("cost")
+        if cost is not None and not isinstance(cost, dict):
+            raise ValueError("OpenCode cost must be an object or unknown")
+        spec["pricing_evidence"]["reported_prices"] = cost
+        spec["pricing_evidence"]["units_verified"] = False
+        spec["catalog_evidence"] = {
+            "api": apis,
+            "external_free_chat_access": False,
+            "access_source": "https://opencode.ai/docs/console/api/inference",
+        }
+        key = f"opencode_zen/{name}" if qualify_ids else name
         result[key] = spec
     return result
 
