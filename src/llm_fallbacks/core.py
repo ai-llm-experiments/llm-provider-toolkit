@@ -252,9 +252,12 @@ def sort_models_by_cost_and_limits(
 
         ranked = sort_omniroute_models(models)
         if free_only:
-            ranked = [(name, spec) for name, spec in ranked if
-                      (spec.get("pricing") or {}).get("prompt") in {0, "0"} and
-                      (spec.get("pricing") or {}).get("completion") in {0, "0"}]
+            ranked = [
+                (name, spec)
+                for name, spec in ranked
+                if (spec.get("pricing") or {}).get("prompt") in {0, "0"}
+                and (spec.get("pricing") or {}).get("completion") in {0, "0"}
+            ]
         return ranked
 
     def _negative_one_to_inf(x: float | int) -> float | int:

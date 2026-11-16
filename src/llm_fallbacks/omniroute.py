@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 from urllib.request import Request, urlopen
 
+
 def get_omniroute_models(base_url: str | None = None, api_key: str | None = None) -> dict[str, dict[str, Any]]:
     base_url = (base_url or os.environ.get('OMNIROUTE_BASE_URL', '')).rstrip('/')
     if not base_url:
@@ -40,6 +41,7 @@ def sort_omniroute_models(models: dict[str, dict[str, Any]]) -> list[tuple[str, 
     Missing prices sort last. Configured combo target order and strategies remain
     owned by OmniRoute. This function only sorts the caller's catalog listing.
     """
+
     def key(item: tuple[str, dict[str, Any]]) -> tuple[float, int, str]:
         name, spec = item
         pricing = spec.get('pricing') or {}
@@ -51,6 +53,7 @@ def sort_omniroute_models(models: dict[str, dict[str, Any]]) -> list[tuple[str, 
             cost = float('inf')
         context = int(spec.get('context_length') or spec.get('max_input_tokens') or 0)
         return cost, -context, name
+
     return sorted(models.items(), key=key)
 
 
