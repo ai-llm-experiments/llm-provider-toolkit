@@ -86,8 +86,17 @@ def load_module(repository, name):
     return module
 
 
-def snapshot_entry(provider, path, providers, cache):
-    """Freeze one saved file and one parsed catalog per provider/path per run."""
+def snapshot_entry(provider, path, providers, cache, *, expected_folder=None):
+    """Freeze saved bytes and parse each provider/path/folder scope independently."""
+    if provider == "yandex":
+        expected_folder = exact(expected_folder)
+        if any(
+            char.isspace() or ord(char) < 32 or ord(char) == 127 or char in "/?#@:%\\"
+            for char in expected_folder
+        ):
+            raise ValueError("Yandex snapshots require an exact expected folder ID")
+    elif expected_folder is not None:
+        raise ValueError("Expected folder scope applies only to Yandex snapshots")
     identity = str(path.resolve())
     raw_cache = cache.setdefault("raw", {})
     parsed_cache = cache.setdefault("parsed", {})
@@ -97,7 +106,7 @@ def snapshot_entry(provider, path, providers, cache):
             raise ValueError("Provider parser must supply an exact snapshot number decoder")
         raw_cache[identity] = read_json(path, decoder=decoder)
     raw, digest = raw_cache[identity]
-    key = (provider, identity)
+    key = (provider, identity, expected_folder)
     if key not in parsed_cache:
         if isinstance(raw, dict) and providers.PROVIDER_CATALOGS[provider]["schema"] == "openai":
             for row in raw.get("data", []) if isinstance(raw.get("data"), list) else []:
@@ -108,7 +117,10 @@ def snapshot_entry(provider, path, providers, cache):
                     and not isinstance(row["pricing"], dict)
                 ):
                     raise ValueError("Current provider pricing must be an object or explicit null")
-        parsed_cache[key] = providers.parse_provider_models(provider, raw, qualify_ids=False)
+        parse_options = {"qualify_ids": False}
+        if expected_folder is not None:
+            parse_options["expected_folder"] = expected_folder
+        parsed_cache[key] = providers.parse_provider_models(provider, raw, **parse_options)
     return digest, parsed_cache[key]
 
 
@@ -260,14 +272,17 @@ def build_unmapped(manifest, evidence, repository, as_of, *, snapshot_cache=None
     catalog, targets, dispositions, sources = [], [], [], []
     seen_providers = set()
     for snapshot in snapshots:
-        strict_object(snapshot, {"provider", "path", "observedAt"}, "snapshot")
+        strict_object(snapshot, {"provider", "path", "observedAt", "expectedFolder"}, "snapshot")
         provider = exact(snapshot.get("provider"))
         if provider not in providers.PROVIDER_CATALOGS or provider in seen_providers:
             raise ValueError("Exactly one complete snapshot per known provider is required")
         seen_providers.add(provider)
         observed = fresh(snapshot.get("observedAt"))
         path = Path(exact(snapshot.get("path")))
-        digest, parsed = snapshot_entry(provider, path, providers, snapshot_cache)
+        expected_folder = snapshot.get("expectedFolder")
+        digest, parsed = snapshot_entry(
+            provider, path, providers, snapshot_cache, expected_folder=expected_folder
+        )
         sources.append(
             {
                 "provider": provider,
@@ -278,6 +293,9 @@ def build_unmapped(manifest, evidence, repository, as_of, *, snapshot_cache=None
             }
         )
         metadata_ref = f"{provider} catalog sha256={digest} observed={observed.isoformat()}"
+        if expected_folder is not None:
+            sources[-1]["expectedFolder"] = expected_folder
+            metadata_ref += f" expected-folder={expected_folder}"
         account = accounts.get(provider, {})
         account_ok = references(account.get("evidence")) and account.get("verifiedAt") is not None
         for model, original in sorted(parsed.items()):
@@ -431,14 +449,20 @@ def prepare_snapshots(manifest, providers, fresh, groups, bindings):
     snapshot_cache = {}
     provider_sizes = {}
     for row in snapshot_rows:
-        strict_object(row, {"provider", "path", "observedAt"}, "snapshot")
+        strict_object(row, {"provider", "path", "observedAt", "expectedFolder"}, "snapshot")
         provider = exact(row.get("provider"))
         if provider in snapshot_providers:
             raise ValueError("Duplicate snapshot provider")
         if provider not in providers.PROVIDER_CATALOGS:
             raise ValueError("Unknown snapshot provider")
         fresh(row.get("observedAt"))
-        _, parsed = snapshot_entry(provider, Path(exact(row.get("path"))), providers, snapshot_cache)
+        _, parsed = snapshot_entry(
+            provider,
+            Path(exact(row.get("path"))),
+            providers,
+            snapshot_cache,
+            expected_folder=row.get("expectedFolder"),
+        )
         provider_sizes[provider] = len(parsed)
         snapshot_providers.add(provider)
         if not any(group[0] == provider for group in groups):

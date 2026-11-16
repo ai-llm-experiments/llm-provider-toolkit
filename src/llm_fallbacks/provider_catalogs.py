@@ -6,6 +6,7 @@ import json
 import math
 from decimal import Decimal, DecimalException, InvalidOperation
 from typing import Any
+from urllib.parse import urlsplit
 
 RETIRED_PROVIDER_IDS = frozenset({"github", "github_models"})
 UNVERIFIED_INFERENCE_PROVIDER_IDS = frozenset({"completions", "completions_me", "completions-me", "completions.me"})
@@ -190,6 +191,28 @@ PROVIDER_CATALOGS = {
         "auto_fetch_models": False,
         "docs": "https://opencode.ai/docs/console/api/inference",
     },
+    "hyperbolic": {
+        "base_url": "https://api.hyperbolic.ai/inference/v1",
+        "models_url": "https://api.hyperbolic.ai/inference/v1/models",
+        "schema": "hyperbolic",
+        "auth_env": "HYPERBOLIC_API_KEY",
+        "auth_scheme": "Bearer",
+        "auto_fetch_models": False,
+        "docs": "https://www.hyperbolic.ai/docs/inference/text-apis#list-models",
+    },
+    "yandex": {
+        "base_url": "https://ai.api.cloud.yandex.net/v1",
+        "models_url": "https://ai.api.cloud.yandex.net/v1/models",
+        "schema": "yandex_scoped",
+        "auth_env": "YANDEX_API_KEY",
+        "auth_scheme": "Api-Key",
+        "scope_env": "YANDEX_FOLDER_ID",
+        "scope_header": "x-project",
+        "required_api_key_scope": "yc.ai.models.viewer",
+        "required_service_account_role": "ai.languageModels.user",
+        "auto_fetch_models": False,
+        "docs": "https://aistudio.yandex.ru/en/docs/ai-studio/operations/models/get",
+    },
 }
 PRICE_FIELDS = {
     "prompt": "input_cost_per_token",
@@ -362,17 +385,26 @@ def parse_openai_models(
 
 
 def parse_provider_models(
-    provider: str, response: dict[str, Any] | list[dict[str, Any]], *, qualify_ids: bool = True
+    provider: str,
+    response: dict[str, Any] | list[dict[str, Any]],
+    *,
+    qualify_ids: bool = True,
+    expected_folder: str | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Parse a saved provider response without inferring free account access."""
     if provider not in PROVIDER_CATALOGS:
         raise ValueError("Unsupported provider or invalid response")
     schema = PROVIDER_CATALOGS[provider]["schema"]
+    if schema == "yandex_scoped":
+        return _parse_yandex_models(response, expected_folder=expected_folder, qualify_ids=qualify_ids)
+    if expected_folder is not None:
+        raise ValueError("Folder scope is supported only for the Yandex catalog")
     if schema == "together":
         return _parse_together_models(response, qualify_ids=qualify_ids)
     if not isinstance(response, dict):
         raise ValueError("Provider response must be an object")
     schema_parsers = {
+        "hyperbolic": _parse_hyperbolic_models,
         "vertex_publisher": _parse_vertex_publisher_models,
         "mistral": _parse_mistral_models,
         "cohere": _parse_cohere_models,
@@ -1050,6 +1082,127 @@ def _parse_featherless_models(response: dict[str, Any], *, qualify_ids: bool) ->
     return result
 
 
+def _parse_hyperbolic_models(
+    response: dict[str, Any], *, qualify_ids: bool = True
+) -> dict[str, dict[str, Any]]:
+    """Retain documented model IDs while leaving prices and eligibility unknown.
+
+    Callers must use the existing bounded snapshot decoder before this function.
+    Unknown envelope fields require review to prevent silent partial imports.
+    """
+    if (
+        not isinstance(response, dict)
+        or set(response) != {"object", "data"}
+        or response.get("object") != "list"
+    ):
+        raise ValueError("A complete documented Hyperbolic list envelope is required")
+    rows = response["data"]
+    if not isinstance(rows, list) or len(rows) > 20_000:
+        raise ValueError("Hyperbolic catalog must contain a bounded model array")
+    result = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError("Hyperbolic catalog entries must be objects")
+        model_id = row.get("id")
+        if (
+            not isinstance(model_id, str)
+            or not model_id
+            or len(model_id) > 500
+            or any(char.isspace() or ord(char) < 32 or ord(char) == 127 for char in model_id)
+        ):
+            raise ValueError("Hyperbolic entries require exact model IDs")
+        key = f"hyperbolic/{model_id}" if qualify_ids else model_id
+        if key in result:
+            raise ValueError("Duplicate Hyperbolic model ID")
+        result[key] = {
+            "litellm_provider": "hyperbolic",
+            "upstream_model": model_id,
+            "mode": "unknown",
+            "pricing_evidence": {
+                "source": "provider-model-catalog",
+                "availability": "listed",
+                "reported_prices": None,
+            },
+        }
+    return result
+
+
+def _parse_yandex_models(
+    response: dict[str, Any], *, expected_folder: str | None, qualify_ids: bool = True
+) -> dict[str, dict[str, Any]]:
+    """Parse the documented list envelope, retaining unknown access and pricing.
+
+    Callers must use the existing bounded snapshot decoder before this function.
+    Folder context is explicit because every documented ID contains that scope.
+    Unknown envelope fields require review to prevent silent partial imports.
+    """
+    if (
+        not isinstance(expected_folder, str)
+        or not expected_folder
+        or len(expected_folder) > 500
+        or any(
+            char.isspace() or ord(char) < 32 or ord(char) == 127 or char in "/?#@:%\\"
+            for char in expected_folder
+        )
+    ):
+        raise ValueError("An exact folder ID is required")
+    if (
+        not isinstance(response, dict)
+        or set(response) != {"object", "data"}
+        or response.get("object") != "list"
+    ):
+        raise ValueError("A complete documented Yandex list envelope is required")
+    rows = response["data"]
+    if not isinstance(rows, list) or len(rows) > 20_000:
+        raise ValueError("Yandex catalog must contain a bounded model array")
+    result = {}
+    for row in rows:
+        if not isinstance(row, dict) or row.get("object") != "model":
+            raise ValueError("Yandex catalog entries must be model objects")
+        model_id = row.get("id")
+        if (
+            not isinstance(model_id, str)
+            or not model_id
+            or len(model_id) > 500
+            or any(
+                char.isspace() or ord(char) < 32 or ord(char) == 127 or char == "\\"
+                for char in model_id
+            )
+        ):
+            raise ValueError("Yandex model entries require exact URI IDs")
+        uri = urlsplit(model_id)
+        if (
+            uri.scheme not in {"gpt", "emb"}
+            or uri.netloc != expected_folder
+            or not uri.path.startswith("/")
+            or uri.path == "/"
+            or uri.query
+            or uri.fragment
+            or "%" in model_id
+        ):
+            raise ValueError("Yandex model URI must match its expected folder")
+        key = f"yandex/{model_id}" if qualify_ids else model_id
+        if key in result:
+            raise ValueError("Duplicate Yandex model ID")
+        result[key] = {
+            "litellm_provider": "yandex",
+            "upstream_model": model_id,
+            "mode": "unknown",
+            "catalog_evidence": {
+                "source": "https://aistudio.yandex.ru/en/docs/ai-studio/operations/models/get",
+                "scope_type": "folder",
+                "folder_id": expected_folder,
+                "scope_basis": "caller-expected-folder-matches-model-uri",
+            },
+            "pricing_evidence": {
+                "source": "provider-model-catalog",
+                "availability": "listed",
+                "reported_prices": None,
+            },
+        }
+    return result
+
+
 def main():
     import argparse
     import sys
@@ -1059,7 +1212,12 @@ def main():
     parser.add_argument("--provider", choices=sorted(PROVIDER_CATALOGS), required=True)
     parser.add_argument("--snapshot", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--expected-folder", help="Required folder scope for a Yandex snapshot")
     args = parser.parse_args()
+    if args.provider == "yandex" and args.expected_folder is None:
+        parser.error("--expected-folder is required for Yandex snapshots")
+    if args.provider != "yandex" and args.expected_folder is not None:
+        parser.error("--expected-folder applies only to Yandex snapshots")
 
     def deny_network(event, _args):
         if event in ("socket.connect", "socket.getaddrinfo", "socket.bind"):
@@ -1070,7 +1228,9 @@ def main():
         raw = source.read(16 * 1024 * 1024 + 1)
     if len(raw) > 16 * 1024 * 1024:
         raise ValueError("Snapshot exceeds the input size limit")
-    result = parse_provider_models(args.provider, decode_provider_snapshot(raw))
+    result = parse_provider_models(
+        args.provider, decode_provider_snapshot(raw), expected_folder=args.expected_folder
+    )
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n")
     print(f"Parsed {len(result)} provider model records")
 
