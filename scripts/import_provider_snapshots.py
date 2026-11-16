@@ -70,7 +70,26 @@ def load_module(repository, name):
     return module
 
 
-def build(manifest, evidence, repository, as_of):
+
+def snapshot_entry(provider, path, providers, cache):
+    """Freeze one saved file and one parsed catalog per provider/path per run."""
+    identity = str(path.resolve())
+    raw_cache = cache.setdefault('raw', {})
+    parsed_cache = cache.setdefault('parsed', {})
+    if identity not in raw_cache:
+        raw_cache[identity] = read_json(path)
+    raw, digest = raw_cache[identity]
+    key = (provider, identity)
+    if key not in parsed_cache:
+        if isinstance(raw, dict) and providers.PROVIDER_CATALOGS[provider]['schema'] == 'openai':
+            for row in raw.get('data', []) if isinstance(raw.get('data'), list) else []:
+                if isinstance(row, dict) and 'pricing' in row and row['pricing'] is not None and not isinstance(row['pricing'], dict):
+                    raise ValueError('Current provider pricing must be an object or explicit null')
+        parsed_cache[key] = providers.parse_provider_models(provider, raw, qualify_ids=False)
+    return digest, parsed_cache[key]
+
+
+def build_unmapped(manifest, evidence, repository, as_of, *, snapshot_cache=None):
     strict_object(manifest, {'version', 'snapshots'}, 'manifest')
     strict_object(evidence, {'version', 'maxAgeHours', 'accounts', 'modelChecks', 'comboEndpoints',
                              'maxGlobalAttempts', 'comboTimeoutMs'}, 'evidence')
@@ -87,6 +106,8 @@ def build(manifest, evidence, repository, as_of):
             raise ValueError('Every supplied timestamp must independently be fresh and nonfuture')
         return parsed
 
+    if snapshot_cache is None:
+        snapshot_cache = {}
     providers = load_module(repository, 'provider_catalogs')
     pricing = load_module(repository, 'pricing')
     quality = load_module(repository, 'quality')
@@ -171,12 +192,7 @@ def build(manifest, evidence, repository, as_of):
         seen_providers.add(provider)
         observed = fresh(snapshot.get('observedAt'))
         path = Path(exact(snapshot.get('path')))
-        raw, digest = read_json(path)
-        if isinstance(raw, dict) and providers.PROVIDER_CATALOGS[provider]['schema'] == 'openai':
-            for row in raw.get('data', []) if isinstance(raw.get('data'), list) else []:
-                if isinstance(row, dict) and 'pricing' in row and row['pricing'] is not None and not isinstance(row['pricing'], dict):
-                    raise ValueError('Current provider pricing must be an object or explicit null')
-        parsed = providers.parse_provider_models(provider, raw, qualify_ids=False)
+        digest, parsed = snapshot_entry(provider, path, providers, snapshot_cache)
         sources.append({'provider': provider, 'snapshotSha256': digest, 'observedAt': observed.isoformat(),
                         'source': providers.PROVIDER_CATALOGS[provider]['models_url'], 'rows': len(parsed)})
         metadata_ref = f'{provider} catalog sha256={digest} observed={observed.isoformat()}'
@@ -264,6 +280,148 @@ def build(manifest, evidence, repository, as_of):
     return catalog, access, proposal, report
 
 
+
+def build(manifest, evidence, repository, as_of):
+    """Bind independently evidenced runtime nodes to canonical provider catalogs."""
+    strict_object(evidence, {'version', 'maxAgeHours', 'accounts', 'modelChecks', 'comboEndpoints',
+                             'maxGlobalAttempts', 'comboTimeoutMs', 'runtimeMappings'}, 'evidence')
+    max_age = evidence.get('maxAgeHours', 24)
+    if type(max_age) not in (int, float) or not math.isfinite(max_age) or max_age <= 0:
+        raise ValueError('maxAgeHours must be positive and finite')
+    providers = load_module(repository, 'provider_catalogs')
+    routing = load_module(repository, 'omniroute')
+
+    def fresh(value):
+        observed = moment(value)
+        age = (as_of - observed).total_seconds() / 3600
+        if not 0 <= age <= max_age:
+            raise ValueError('Mapping evidence must independently be fresh and nonfuture')
+        return observed
+
+    if type(evidence.get('version')) is not int or evidence['version'] != 1:
+        raise ValueError('Evidence version must be 1')
+    mappings = evidence.get('runtimeMappings', [])
+    accounts = evidence.get('accounts', [])
+    checks = evidence.get('modelChecks', [])
+    if any(not isinstance(rows, list) or len(rows) > MAX_ROWS for rows in (mappings, accounts, checks)):
+        raise ValueError('Runtime inputs must be bounded arrays')
+    bindings = {}
+    node_owners = {}
+    for mapping in mappings:
+        strict_object(mapping, {'provider', 'providerId', 'quotaGroup', 'verifiedAt', 'evidence'}, 'runtime mapping')
+        provider, node = exact(mapping.get('provider')), exact(mapping.get('providerId'))
+        if provider not in providers.PROVIDER_CATALOGS:
+            raise ValueError('Unknown canonical provider')
+        identity = (provider, node)
+        if identity in bindings or (node in node_owners and node_owners[node] != provider):
+            raise ValueError('Duplicate or conflicting runtime mapping')
+        if node in providers.PROVIDER_CATALOGS and node != provider:
+            raise ValueError('Runtime identity collides with a different canonical provider')
+        exact(mapping.get('quotaGroup'))
+        validate_references(mapping.get('evidence'), 'mapping evidence')
+        fresh(mapping.get('verifiedAt'))
+        bindings[identity] = mapping
+        node_owners[node] = provider
+    grouped_accounts, grouped_checks = {}, {}
+    for account in accounts:
+        strict_object(account, {'provider', 'providerId', 'connected', 'providerScopeApproved', 'verifiedAt', 'evidence'}, 'account')
+        provider = exact(account.get('provider'))
+        node = exact(account.get('providerId', provider))
+        identity = (provider, node)
+        if identity in grouped_accounts:
+            raise ValueError('Duplicate runtime account scope')
+        grouped_accounts[identity] = {key: value for key, value in account.items() if key != 'providerId'}
+    seen_checks = set()
+    for check in checks:
+        strict_object(check, CHECK_KEYS | {'providerId'}, 'model check')
+        provider = exact(check.get('provider'))
+        node = exact(check.get('providerId', provider))
+        model = exact(check.get('model'))
+        identity = (provider, node)
+        if (provider, node, model) in seen_checks:
+            raise ValueError('Duplicate runtime model check')
+        seen_checks.add((provider, node, model))
+        mapping = bindings.get(identity)
+        if mapping and 'quotaGroup' in check and check['quotaGroup'] != mapping['quotaGroup']:
+            raise ValueError('Model quota group contradicts mapped account quota')
+        grouped_checks.setdefault(identity, []).append({key: value for key, value in check.items() if key != 'providerId'})
+    groups = set(bindings) | set(grouped_accounts) | set(grouped_checks)
+    # A canonical snapshot alone remains a candidate with blocked admission.
+    strict_object(manifest, {'version', 'snapshots'}, 'manifest')
+    if type(manifest.get('version')) is not int or manifest['version'] != 1:
+        raise ValueError('Manifest version must be 1')
+    snapshot_rows = manifest.get('snapshots')
+    if not isinstance(snapshot_rows, list) or len(snapshot_rows) > MAX_ROWS:
+        raise ValueError('Snapshots must be a bounded array')
+    snapshot_providers = set()
+    snapshot_cache = {}
+    provider_sizes = {}
+    for row in snapshot_rows:
+        strict_object(row, {'provider', 'path', 'observedAt'}, 'snapshot')
+        provider = exact(row.get('provider'))
+        if provider in snapshot_providers:
+            raise ValueError('Duplicate snapshot provider')
+        if provider not in providers.PROVIDER_CATALOGS:
+            raise ValueError('Unknown snapshot provider')
+        fresh(row.get('observedAt'))
+        _, parsed = snapshot_entry(provider, Path(exact(row.get('path'))), providers, snapshot_cache)
+        provider_sizes[provider] = len(parsed)
+        snapshot_providers.add(provider)
+        if not any(group[0] == provider for group in groups):
+            groups.add((provider, provider))
+    for provider, node in groups:
+        if provider not in providers.PROVIDER_CATALOGS or provider not in snapshot_providers:
+            raise ValueError('Runtime evidence requires a saved canonical provider snapshot')
+        if node != provider and (provider, node) not in bindings:
+            raise ValueError('Alternate runtime ID requires an explicit evidenced mapping')
+    if len(groups) > MAX_ROWS:
+        raise ValueError('Combined runtime binding count exceeds bound')
+    rows_by_identity, targets, reports = {}, [], []
+    expanded_rows = 0
+    base = {key: value for key, value in evidence.items() if key not in ('runtimeMappings', 'accounts', 'modelChecks')}
+    policy_mappings = []
+    for provider, node in sorted(groups):
+        expanded_rows += provider_sizes[provider]
+        if expanded_rows > MAX_ROWS:
+            raise ValueError('Snapshot rows expanded across runtime bindings exceed bound')
+        local = dict(base)
+        local['accounts'] = [grouped_accounts[(provider, node)]] if (provider, node) in grouped_accounts else []
+        local['modelChecks'] = grouped_checks.get((provider, node), [])
+        selected = {'version': manifest.get('version'), 'snapshots': [row for row in snapshot_rows if row['provider'] == provider]}
+        catalog, access, _, report = build_unmapped(selected, local, repository, as_of, snapshot_cache=snapshot_cache)
+        mapping = bindings.get((provider, node))
+        if mapping:
+            policy_mappings.append({'catalogProvider': provider, 'providerId': node, 'evidence': mapping['evidence']})
+        if len(targets) + len(access['targets']) > MAX_ROWS:
+            raise ValueError('Combined runtime target count exceeds bound')
+        for row in catalog:
+            identity = (row['provider'], row['id'])
+            if identity not in rows_by_identity and len(rows_by_identity) >= MAX_ROWS:
+                raise ValueError('Combined catalog count exceeds bound')
+            previous = rows_by_identity.setdefault(identity, row)
+            if previous != row:
+                raise ValueError('Conflicting canonical metadata across runtime nodes')
+        for target in access['targets']:
+            target['providerId'] = node
+            if mapping:
+                target['quotaGroup'] = mapping['quotaGroup']
+                target['evidence'] += mapping['evidence']
+                target['verifiedAt'] = min(moment(target['verifiedAt']), fresh(mapping['verifiedAt'])).isoformat()
+            targets.append(target)
+        reports.append({'provider': provider, 'providerId': node, 'mappingEvidencePresent': mapping is not None,
+                        'import': report})
+    catalog = sorted(rows_by_identity.values(), key=lambda row: (-row['quality_score'], row['provider'], row['id']))
+    targets.sort(key=lambda target: (target['providerId'], target['model']))
+    if len(catalog) > MAX_ROWS or len(targets) > MAX_ROWS:
+        raise ValueError('Combined runtime candidates exceed adapter bounds')
+    policy = {key: value for key, value in base.items() if key not in ('version',)}
+    policy.update({'version': 1, 'targets': targets, 'providerMappings': policy_mappings})
+    proposal = routing.generate(catalog, policy, as_of, hashlib.sha256(encoded(catalog)).hexdigest(),
+                                hashlib.sha256(encoded(policy)).hexdigest())
+    return catalog, policy, proposal, {'asOf': as_of.isoformat(), 'runtimeImports': reports,
+                                      'sources': [source for report in reports for source in report['import']['sources']]}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--manifest', type=Path, required=True)
@@ -288,7 +446,7 @@ def main():
     args.output_dir.mkdir(parents=True, exist_ok=True)
     for name, content in serialized.items():
         (args.output_dir / name).write_bytes(content)
-    print(f'Providers {len(report["sources"])}; candidates {len(catalog)}; proposed combos {len(proposal["proposedCombos"])}')
+    print(f'Providers {len({source["provider"] for source in report["sources"]})}; candidates {len(catalog)}; proposed combos {len(proposal["proposedCombos"])}')
 
 
 if __name__ == '__main__':
