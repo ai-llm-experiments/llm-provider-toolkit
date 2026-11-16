@@ -51,3 +51,19 @@ Embedding targets additionally require an `embeddingSpace` object with a nonblan
 Proposals use priority routing and enabled account stickiness. Runtime model affinity, exact-account admission, failover, key permissions, and live request behavior remain deployment verification responsibilities. Every eligible target is retained in the sorted route. The attempt budget defaults to the eligible target count up to OmniRoute's hard limit of 200. `beyondAttemptBudget` explicitly lists targets beyond that execution limit. The default whole-combo deadline is ten minutes and is configurable through `comboTimeoutMs`. A request stops at its first success, attempt budget, or deadline. Hundreds of catalog rows sharing one gateway share its quotas.
 
 The adapter writes proposed payloads only. The parent deployment workflow owns import, update/rename compatibility, activation, source review, and live verification. Keep credentials in the existing secret manager and omit them from the access manifest.
+
+## Import a saved OpenRouter snapshot
+
+The optional offline importer refreshes candidate metadata from a saved public OpenRouter models response and combines it with a credential-free evidence file. It calls the scoring helpers from the repository path supplied by the operator; only point it at trusted code. It does not fetch the snapshot, contact providers, or change routes.
+
+```sh
+python scripts/import_openrouter_snapshot.py \
+  --models /path/to/saved-openrouter-models.json \
+  --observed-at 2026-11-15T23:00:00Z \
+  --as-of 2026-11-15T23:30:00Z \
+  --catalog configs/free_models.json \
+  --evidence configs/omniroute-openrouter-evidence.example.json \
+  --repository . --output-dir /tmp/omniroute-snapshot
+```
+
+`catalog.candidate.json`, `access.draft.json`, and `import-report.json` are review artifacts, not runtime changes. Record the real observation and evaluation times; future and stale evidence is rejected. The example has no account or model attestations and remains ineligible. Explicit zeroes in reported pricing fields are only candidate metadata: verify completeness, account scope, privacy, endpoint, and usage policy before adding attestations. This importer handles OpenRouter; the main catalog includes other providers and requires separate provider-specific evidence.
