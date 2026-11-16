@@ -90,10 +90,7 @@ def snapshot_entry(provider, path, providers, cache, *, expected_folder=None):
     """Freeze saved bytes and parse each provider/path/folder scope independently."""
     if provider == "yandex":
         expected_folder = exact(expected_folder)
-        if any(
-            char.isspace() or ord(char) < 32 or ord(char) == 127 or char in "/?#@:%\\"
-            for char in expected_folder
-        ):
+        if any(char.isspace() or ord(char) < 32 or ord(char) == 127 or char in "/?#@:%\\" for char in expected_folder):
             raise ValueError("Yandex snapshots require an exact expected folder ID")
     elif expected_folder is not None:
         raise ValueError("Expected folder scope applies only to Yandex snapshots")
@@ -280,9 +277,7 @@ def build_unmapped(manifest, evidence, repository, as_of, *, snapshot_cache=None
         observed = fresh(snapshot.get("observedAt"))
         path = Path(exact(snapshot.get("path")))
         expected_folder = snapshot.get("expectedFolder")
-        digest, parsed = snapshot_entry(
-            provider, path, providers, snapshot_cache, expected_folder=expected_folder
-        )
+        digest, parsed = snapshot_entry(provider, path, providers, snapshot_cache, expected_folder=expected_folder)
         sources.append(
             {
                 "provider": provider,
@@ -457,11 +452,7 @@ def prepare_snapshots(manifest, providers, fresh, groups, bindings):
             raise ValueError("Unknown snapshot provider")
         fresh(row.get("observedAt"))
         _, parsed = snapshot_entry(
-            provider,
-            Path(exact(row.get("path"))),
-            providers,
-            snapshot_cache,
-            expected_folder=row.get("expectedFolder"),
+            provider, Path(exact(row.get("path"))), providers, snapshot_cache, expected_folder=row.get("expectedFolder")
         )
         provider_sizes[provider] = len(parsed)
         snapshot_providers.add(provider)

@@ -1082,19 +1082,13 @@ def _parse_featherless_models(response: dict[str, Any], *, qualify_ids: bool) ->
     return result
 
 
-def _parse_hyperbolic_models(
-    response: dict[str, Any], *, qualify_ids: bool = True
-) -> dict[str, dict[str, Any]]:
+def _parse_hyperbolic_models(response: dict[str, Any], *, qualify_ids: bool = True) -> dict[str, dict[str, Any]]:
     """Retain documented model IDs while leaving prices and eligibility unknown.
 
     Callers must use the existing bounded snapshot decoder before this function.
     Unknown envelope fields require review to prevent silent partial imports.
     """
-    if (
-        not isinstance(response, dict)
-        or set(response) != {"object", "data"}
-        or response.get("object") != "list"
-    ):
+    if not isinstance(response, dict) or set(response) != {"object", "data"} or response.get("object") != "list":
         raise ValueError("A complete documented Hyperbolic list envelope is required")
     rows = response["data"]
     if not isinstance(rows, list) or len(rows) > 20_000:
@@ -1118,11 +1112,7 @@ def _parse_hyperbolic_models(
             "litellm_provider": "hyperbolic",
             "upstream_model": model_id,
             "mode": "unknown",
-            "pricing_evidence": {
-                "source": "provider-model-catalog",
-                "availability": "listed",
-                "reported_prices": None,
-            },
+            "pricing_evidence": {"source": "provider-model-catalog", "availability": "listed", "reported_prices": None},
         }
     return result
 
@@ -1140,17 +1130,10 @@ def _parse_yandex_models(
         not isinstance(expected_folder, str)
         or not expected_folder
         or len(expected_folder) > 500
-        or any(
-            char.isspace() or ord(char) < 32 or ord(char) == 127 or char in "/?#@:%\\"
-            for char in expected_folder
-        )
+        or any(char.isspace() or ord(char) < 32 or ord(char) == 127 or char in "/?#@:%\\" for char in expected_folder)
     ):
         raise ValueError("An exact folder ID is required")
-    if (
-        not isinstance(response, dict)
-        or set(response) != {"object", "data"}
-        or response.get("object") != "list"
-    ):
+    if not isinstance(response, dict) or set(response) != {"object", "data"} or response.get("object") != "list":
         raise ValueError("A complete documented Yandex list envelope is required")
     rows = response["data"]
     if not isinstance(rows, list) or len(rows) > 20_000:
@@ -1164,10 +1147,7 @@ def _parse_yandex_models(
             not isinstance(model_id, str)
             or not model_id
             or len(model_id) > 500
-            or any(
-                char.isspace() or ord(char) < 32 or ord(char) == 127 or char == "\\"
-                for char in model_id
-            )
+            or any(char.isspace() or ord(char) < 32 or ord(char) == 127 or char == "\\" for char in model_id)
         ):
             raise ValueError("Yandex model entries require exact URI IDs")
         uri = urlsplit(model_id)
@@ -1194,11 +1174,7 @@ def _parse_yandex_models(
                 "folder_id": expected_folder,
                 "scope_basis": "caller-expected-folder-matches-model-uri",
             },
-            "pricing_evidence": {
-                "source": "provider-model-catalog",
-                "availability": "listed",
-                "reported_prices": None,
-            },
+            "pricing_evidence": {"source": "provider-model-catalog", "availability": "listed", "reported_prices": None},
         }
     return result
 
@@ -1228,9 +1204,7 @@ def main():
         raw = source.read(16 * 1024 * 1024 + 1)
     if len(raw) > 16 * 1024 * 1024:
         raise ValueError("Snapshot exceeds the input size limit")
-    result = parse_provider_models(
-        args.provider, decode_provider_snapshot(raw), expected_folder=args.expected_folder
-    )
+    result = parse_provider_models(args.provider, decode_provider_snapshot(raw), expected_folder=args.expected_folder)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n")
     print(f"Parsed {len(result)} provider model records")
 
