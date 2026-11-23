@@ -25,5 +25,4 @@ Incident and workflow notes with YAML frontmatter. Search by `applies_when`, `ca
 ## Related
 
 - [`docs/CAVEATS.md`](../CAVEATS.md) — product limits (not incident-specific)
-- [`CONCEPTS.md`](../../CONCEPTS.md) — gateway vocabulary
-- [`AGENTS.md`](../../AGENTS.md) — pitfalls with deep links
+- [`CONCEPTS.md`](https://github.com/ai-llm-experiments/llm-provider-toolkit/blob/main/CONCEPTS.md) — gateway vocabulary

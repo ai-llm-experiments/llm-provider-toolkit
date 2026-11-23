@@ -10,7 +10,7 @@ status: living
 
 This addendum records **as-built deltas** after plan 002 shipped. The original plan is a historical RFC — update this file instead of editing completed plan units.
 
-**Remediation track:** [Plan 003 audit remediation](2026-07-24-003-feat-audit-remediation-living-docs-plan.md) (if copied to repo) or Cursor living plan 4658a344.
+**Remediation track:** [July 24 audit remediation report](../pulse-reports/2026-07-24-audit-remediation-pulse.md).
 
 ## As-built production (July 2026)
 

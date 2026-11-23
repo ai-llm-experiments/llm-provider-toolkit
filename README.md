@@ -1,11 +1,11 @@
-# LLM Fallbacks
+# LLM Provider Toolkit
 
-[![Python Package](https://github.com/bodecloud/llm_fallbacks/actions/workflows/python-package.yml/badge.svg)](https://github.com/bodecloud/llm_fallbacks/actions/workflows/python-package.yml)
-[![Daily Config Update](https://github.com/bodecloud/llm_fallbacks/actions/workflows/daily-config-update.yml/badge.svg)](https://github.com/bodecloud/llm_fallbacks/actions/workflows/daily-config-update.yml)
-[![GitHub Pages](https://img.shields.io/badge/chat-GitHub%20Pages-blue)](https://bodencrouch.github.io/llm_fallbacks/)
+[![Python Package](https://github.com/ai-llm-experiments/llm-provider-toolkit/actions/workflows/python-package.yml/badge.svg)](https://github.com/ai-llm-experiments/llm-provider-toolkit/actions/workflows/python-package.yml)
+[![Daily Config Update](https://github.com/ai-llm-experiments/llm-provider-toolkit/actions/workflows/daily-config-update.yml/badge.svg)](https://github.com/ai-llm-experiments/llm-provider-toolkit/actions/workflows/daily-config-update.yml)
+[![GitHub Pages](https://img.shields.io/badge/chat-GitHub%20Pages-blue)](https://ai-llm-experiments.github.io/llm-provider-toolkit/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Pick a model. If it fails, try the next one. This library ranks free LLM models and builds fallback chains on top of [LiteLLM](https://github.com/BerriAI/litellm).
+A Python toolkit and browser workbench for working with LLM providers, model catalogs, and API endpoints. Inspect published metadata, compare model capabilities and costs, and generate [LiteLLM](https://github.com/BerriAI/litellm) configurations.
 
 ## What you get
 
@@ -13,7 +13,8 @@ Pick a model. If it fails, try the next one. This library ranks free LLM models 
 - **Model lists** — Filter by cost, context length, vision, tools, and more.
 - **Quality scores** — Free models ranked by what they support (not benchmark scores).
 - **Daily updates** — JSON and YAML lists refresh every night via GitHub Actions.
-- **Live chat demo** — Try it in your browser at [GitHub Pages](https://bodencrouch.github.io/llm_fallbacks/).
+- **Browser workbench** — [Explore models and endpoints](https://ai-llm-experiments.github.io/llm-provider-toolkit/), parse model responses, and export a config.
+- **Chat demo** — [Choose a model and try its route](https://ai-llm-experiments.github.io/llm-provider-toolkit/chat/).
 - **Desktop explorer** — Browse models with `python -m llm_fallbacks`.
 
 ## Install
@@ -71,8 +72,8 @@ Files in `configs/` update daily at midnight UTC. Fetch them from GitHub or gene
 **Stable raw URLs:**
 
 ```
-https://raw.githubusercontent.com/bodecloud/llm_fallbacks/main/configs/free_models.json
-https://raw.githubusercontent.com/bodecloud/llm_fallbacks/main/configs/free_models_ids.txt
+https://raw.githubusercontent.com/ai-llm-experiments/llm-provider-toolkit/main/configs/free_models.json
+https://raw.githubusercontent.com/ai-llm-experiments/llm-provider-toolkit/main/configs/free_models_ids.txt
 ```
 
 **Python:**
@@ -81,7 +82,7 @@ https://raw.githubusercontent.com/bodecloud/llm_fallbacks/main/configs/free_mode
 import json
 import urllib.request
 
-url = "https://raw.githubusercontent.com/bodecloud/llm_fallbacks/main/configs/free_models.json"
+url = "https://raw.githubusercontent.com/ai-llm-experiments/llm-provider-toolkit/main/configs/free_models.json"
 with urllib.request.urlopen(url) as resp:
     free_models = json.loads(resp.read())
 
@@ -92,8 +93,8 @@ for model in free_models[:5]:
 **curl:**
 
 ```bash
-curl -s https://raw.githubusercontent.com/bodecloud/llm_fallbacks/main/configs/free_models_ids.txt
-curl -s https://raw.githubusercontent.com/bodecloud/llm_fallbacks/main/configs/free_models.json | python3 -m json.tool | head -30
+curl -s https://raw.githubusercontent.com/ai-llm-experiments/llm-provider-toolkit/main/configs/free_models_ids.txt
+curl -s https://raw.githubusercontent.com/ai-llm-experiments/llm-provider-toolkit/main/configs/free_models.json | python3 -m json.tool | head -30
 ```
 
 ### Quality scoring

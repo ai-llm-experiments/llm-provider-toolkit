@@ -59,7 +59,7 @@ git push "https://x-access-token:${GITHUB_TOKEN}@github.com/bodecloud/llm_fallba
 | `PROXY_GUEST_TOKEN` | Guest auth — set as wrangler **secret** (not `wrangler.toml` `[vars]`) |
 | `WORKER_URL` | Injected into Pages `config.js`; enables graceful skip when deploy fails |
 
-**Authentication error [code: 10000]:** Token lacks Workers Scripts Edit or wrong account. Regenerate at Cloudflare dashboard → My Profile → API Tokens → Create Token → Edit Cloudflare Workers template. Update `CLOUDFLARE_API_TOKEN` via `gh secret set` or [`deploy/scripts/sync-github-secrets.sh`](../../deploy/scripts/sync-github-secrets.sh).
+**Authentication error [code: 10000]:** Token lacks Workers Scripts Edit or wrong account. Regenerate at Cloudflare dashboard → My Profile → API Tokens → Create Token → Edit Cloudflare Workers template. Update `CLOUDFLARE_API_TOKEN` via `gh secret set` or [`deploy/scripts/sync-github-secrets.sh`](https://github.com/ai-llm-experiments/llm-provider-toolkit/blob/main/deploy/scripts/sync-github-secrets.sh).
 
 **WORKER_URL skip path:** When wrangler deploy fails but `WORKER_URL` is set, `deploy-proxies.yml` sets `deployed=false` and exits 0. The committed `configs/chat_proxy.json` **dual endpoints are not overwritten**. Pages deploy still uses `WORKER_URL` from secrets at build time. Re-run Deploy Proxies after fixing the token.
 

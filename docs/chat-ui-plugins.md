@@ -1,6 +1,6 @@
 # Chat UI plugins
 
-The public chat at [`docs/index.html`](../index.html) is built from [`webui/`](../webui/) and deployed via GitHub Actions.
+The [public chat demo](https://ai-llm-experiments.github.io/llm-provider-toolkit/chat/) is built from [`webui/`](https://github.com/ai-llm-experiments/llm-provider-toolkit/tree/main/webui) and deployed via GitHub Actions. The [workbench](https://ai-llm-experiments.github.io/llm-provider-toolkit/) serves the model and provider tools.
 
 ## Stack
 
@@ -15,7 +15,7 @@ The public chat at [`docs/index.html`](../index.html) is built from [`webui/`](.
 ```bash
 cd webui
 npm ci
-npm run build          # writes docs/assets/* and docs/index.html
+npm run build          # writes docs/assets/* and docs/chat/index.html
 npm run sync:shell     # refresh styles.css from ai-researchwizard
 npm test               # vitest (model explorer filters)
 ```
