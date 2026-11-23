@@ -43,10 +43,8 @@ jobs:
           echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
           cd webui && npm ci && npm run build
 
-      - name: Generate docs/config.js from secrets
+      - name: Generate public chat configuration
         env:
-          WORKER_URL: ${{ secrets.WORKER_URL }}
-          LITELLM_URL: ${{ secrets.LITELLM_URL }}
           PROXY_GUEST_TOKEN: ${{ secrets.PROXY_GUEST_TOKEN }}
           TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
         run: |
@@ -56,11 +54,6 @@ jobs:
           from pathlib import Path
 
           endpoints = []
-          for key in ("WORKER_URL", "LITELLM_URL"):
-              val = (os.environ.get(key) or "").strip().rstrip("/")
-              if val:
-                  endpoints.append(val)
-
           guest_token = os.environ.get("PROXY_GUEST_TOKEN") or "llm-fallbacks-public"
           turnstile_site_key = (os.environ.get("TURNSTILE_SITE_KEY") or "").strip()
           chat_proxy_path = Path("configs/chat_proxy.json")
