@@ -50,27 +50,26 @@ async function loadCatalog(config: AppConfig): Promise<{
   catalog: CatalogEntry[];
   providerUrls: Record<string, string>;
 }> {
-  let catalog: CatalogEntry[] = [];
-  let providerUrls: Record<string, string> = {};
-
-  if (config.catalogUrl) {
+  async function fetchOptional(url: string, fallback: unknown): Promise<unknown> {
+    if (!url) return fallback;
     try {
-      const res = await fetch(config.catalogUrl);
-      if (res.ok) catalog = (await res.json()) as CatalogEntry[];
+      const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
+      return response.ok ? await response.json() : fallback;
     } catch {
-      /* optional */
-    }
-  }
-  if (config.providerUrlsUrl) {
-    try {
-      const res = await fetch(config.providerUrlsUrl);
-      if (res.ok) providerUrls = (await res.json()) as Record<string, string>;
-    } catch {
-      /* optional */
+      return fallback;
     }
   }
 
-  return { catalog, providerUrls };
+  const [rows, urls] = await Promise.all([
+    fetchOptional(config.catalogUrl, []),
+    fetchOptional(config.providerUrlsUrl, {}),
+  ]);
+  return {
+    catalog: Array.isArray(rows) ? rows.filter((row) => row && typeof row.id === "string") : [],
+    providerUrls: urls && typeof urls === "object" && !Array.isArray(urls)
+      ? Object.fromEntries(Object.entries(urls).filter(([, url]) => typeof url === "string"))
+      : {},
+  };
 }
 
 function wireChatInputIds(container: HTMLElement): void {
@@ -282,6 +281,9 @@ bootstrap().catch((err) => {
   console.error("Chat bootstrap failed", err);
   const mount = document.getElementById("chatMount");
   if (mount) {
-    mount.innerHTML = `<p class="boot-error">Failed to load chat: ${err instanceof Error ? err.message : String(err)}</p>`;
+    const message = document.createElement("p");
+    message.className = "boot-error";
+    message.textContent = "Chat could not start. Reload the page to try again.";
+    mount.replaceChildren(message);
   }
 });

@@ -10,15 +10,20 @@ function stateLabel(state: HealthProbeResult["state"]): string {
   return "Unreachable";
 }
 
+function escapeEndpoint(base: string): string {
+  return base.replaceAll("&", "&amp;").replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+}
+
 function renderHealthRow(base: string, result: HealthProbeResult): string {
   const hint = result.authFailure
     ? `<span class="lf-health-hint">Auth failed — see docs/CAVEATS.md</span>`
     : "";
   const statusCode = result.statusCode ? `HTTP ${result.statusCode}` : "No response";
   return `
-    <li class="lf-health-row" data-endpoint="${base}">
+    <li class="lf-health-row" data-endpoint="${escapeEndpoint(base)}">
       <span class="lf-health-dot lf-health-${result.state}" aria-hidden="true"></span>
-      <span class="lf-health-url">${base}</span>
+      <span class="lf-health-url">${escapeEndpoint(base)}</span>
       <span class="lf-health-meta">${stateLabel(result.state)} · ${result.ms}ms · ${statusCode}</span>
       ${hint}
     </li>
@@ -86,7 +91,9 @@ export function FailoverSettingsPlugin(deps: {
           deps.provider.updateConfig(config);
         });
 
+        let healthCheckId = 0;
         const runHealthChecks = async () => {
+          const checkId = ++healthCheckId;
           const endpoints = normalizeEndpoints(
             endpointsEl.value
               .split("\n")
@@ -101,12 +108,13 @@ export function FailoverSettingsPlugin(deps: {
           healthListEl.innerHTML = endpoints
             .map(
               (base) =>
-                `<li class="lf-health-row lf-health-pending"><span class="lf-health-url">${base}</span> Checking…</li>`
+                `<li class="lf-health-row lf-health-pending"><span class="lf-health-url">${escapeEndpoint(base)}</span> Checking…</li>`
             )
             .join("");
           const results = await Promise.all(
             endpoints.map(async (base) => ({ base, result: await probeEndpoint(base) }))
           );
+          if (checkId !== healthCheckId) return;
           healthListEl.innerHTML = results
             .map(({ base, result }) => renderHealthRow(base, result))
             .join("");
@@ -137,7 +145,7 @@ export function FailoverSettingsPlugin(deps: {
           const route = deps.provider.getLastRoute() || window.LLM_FALLBACKS_ROUTE || "—";
           statusEl.textContent = `Route: ${route}`;
         };
-        setInterval(updateRoute, 1000);
+        updateRoute();
 
         root.querySelector("#saveFailoverBtn")?.addEventListener("click", async () => {
           const endpoints = normalizeEndpoints(
@@ -176,6 +184,7 @@ export function FailoverSettingsPlugin(deps: {
           try {
             const res = await fetch(url, {
               method: "POST",
+              signal: AbortSignal.timeout(15000),
               headers: {
                 Authorization: `Bearer ${guestEl.value.trim()}`,
                 "Content-Type": "application/json",

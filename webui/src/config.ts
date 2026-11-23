@@ -57,7 +57,7 @@ export function seedZeroConfigFromPageConfig(): void {
 export async function mergeChatProxyArtifact(config: AppConfig): Promise<AppConfig> {
   if (!config.chatProxyUrl) return config;
   try {
-    const res = await fetch(config.chatProxyUrl);
+    const res = await fetch(config.chatProxyUrl, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return config;
     const proxyCfg = (await res.json()) as {
       endpoints?: string[];
@@ -65,11 +65,11 @@ export async function mergeChatProxyArtifact(config: AppConfig): Promise<AppConf
     };
     const published = normalizeEndpoints(proxyCfg.endpoints);
     const hasSavedEndpoints = normalizeEndpoints(loadJson<string[]>(STORAGE_KEYS.endpoints, [])).length > 0;
-    const endpoints = hasSavedEndpoints || !published.length ? config.endpoints : published;
+    const endpoints = hasSavedEndpoints ? config.endpoints : [...config.endpoints, ...published];
     return {
       ...config,
       endpoints: [...new Set(endpoints)],
-      guestToken: proxyCfg.guestToken || config.guestToken,
+      guestToken: localStorage.getItem(STORAGE_KEYS.guestToken) || proxyCfg.guestToken || config.guestToken,
     };
   } catch {
     return config;

@@ -13,29 +13,34 @@ export async function parseSSE(
   const decoder = new TextDecoder();
   let buffer = "";
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
 
-    const parts = buffer.split(/\r?\n\r?\n/);
-    buffer = parts.pop() || "";
+      const parts = buffer.split(/\r?\n\r?\n/);
+      buffer = parts.pop() || "";
 
-    for (const part of parts) {
-      for (const line of part.split("\n")) {
-        if (!line.startsWith("data:")) continue;
-        const data = line.slice(5).trim();
-        if (data && onMessage(data) === true) return;
+      for (const part of parts) {
+        for (const line of part.split("\n")) {
+          if (!line.startsWith("data:")) continue;
+          const data = line.slice(5).trim();
+          if (data && onMessage(data) === true) return;
+        }
       }
     }
-  }
 
-  if (buffer.trim()) {
-    for (const line of buffer.split("\n")) {
-      if (!line.startsWith("data:")) continue;
-      const data = line.slice(5).trim();
-      if (data) onMessage(data);
+    if (buffer.trim()) {
+      for (const line of buffer.split("\n")) {
+        if (!line.startsWith("data:")) continue;
+        const data = line.slice(5).trim();
+        if (data) onMessage(data);
+      }
     }
+  } finally {
+    void reader.cancel().catch(() => {});
+    reader.releaseLock();
   }
 }
 

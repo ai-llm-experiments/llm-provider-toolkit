@@ -42,7 +42,7 @@ async function refreshStatusStrip(mount: HTMLElement): Promise<void> {
   let healthOk = false;
   try {
     const healthUrl = healthPathForBase(base);
-    const healthRes = await fetch(healthUrl, { method: "GET", mode: "cors" });
+    const healthRes = await fetch(healthUrl, { method: "GET", mode: "cors", signal: AbortSignal.timeout(5000) });
     healthOk = healthRes.ok;
   } catch {
     healthOk = false;
@@ -52,13 +52,15 @@ async function refreshStatusStrip(mount: HTMLElement): Promise<void> {
   try {
     const metricsUrl = `${base.replace(/\/$/, "")}/v1/metrics?days=1`;
     const metricsRes = await fetch(metricsUrl, {
+      signal: AbortSignal.timeout(5000),
       headers: { Authorization: `Bearer ${config.guestToken}` },
     });
     if (metricsRes.ok) {
       const metrics = (await metricsRes.json()) as {
         events?: Record<string, number>;
       };
-      chatCount = metrics.events?.chat_completion_success ?? 0;
+      const count = metrics.events?.chat_completion_success;
+      if (typeof count === "number" && Number.isFinite(count)) chatCount = count;
     }
   } catch {
     /* optional */
@@ -83,7 +85,8 @@ export function showRateLimitBanner(seconds?: number): void {
 export function showStatusMessage(text: string, durationMs = 3500): void {
   const mount = document.getElementById("lfStatusStrip");
   if (!mount) return;
-  mount.innerHTML = `<span class="lf-status-dot lf-status-ok" aria-hidden="true"></span><span class="lf-status-text">${text}</span>`;
+  mount.innerHTML = `<span class="lf-status-dot lf-status-ok" aria-hidden="true"></span><span class="lf-status-text"></span>`;
+  mount.querySelector(".lf-status-text")!.textContent = text;
   window.setTimeout(() => {
     if (mount.querySelector(".lf-status-text")?.textContent === text) {
       void refreshStatusStrip(mount);
