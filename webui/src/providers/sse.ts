@@ -18,7 +18,7 @@ export async function parseSSE(
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
 
-    const parts = buffer.split("\n\n");
+    const parts = buffer.split(/\r?\n\r?\n/);
     buffer = parts.pop() || "";
 
     for (const part of parts) {
@@ -90,7 +90,7 @@ function parseUsage(raw: unknown): TokenUsage | undefined {
 }
 
 interface Delta {
-  content?: string;
+  content?: unknown;
   reasoning_content?: string;
   reasoning?: string;
   reasoning_text?: string;
@@ -194,15 +194,18 @@ export async function emitOpenAiSseAsStreamEvents(
     }
 
     // 3. Handle text content
-    if (delta.content) {
-      if (delta.content.trim()) hasReplyContent = true;
+    const text = typeof delta.content === "string"
+      ? delta.content
+      : typeof delta.content === "number" && Number.isFinite(delta.content) ? String(delta.content) : "";
+    if (text) {
+      if (text.trim()) hasReplyContent = true;
       markFirstToken();
       if (!currentTextBlockId) currentTextBlockId = randomId();
       onEvent({
         type: "text_delta",
         messageId: currentMessageId,
         blockId: currentTextBlockId,
-        delta: delta.content,
+        delta: text,
       });
     }
 

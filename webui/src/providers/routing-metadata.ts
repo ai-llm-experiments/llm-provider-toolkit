@@ -54,6 +54,7 @@ export function hostnameFromUrl(url: string): string {
 }
 
 export function formatRoutingChip(meta: CompletionMeta): string {
+  if (meta.endpoint === "—") return "Route failed";
   const parts: string[] = [];
   if (meta.endpoint) {
     parts.push(hostnameFromUrl(meta.endpoint));

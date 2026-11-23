@@ -55,14 +55,13 @@ function transformWorkersAIStream(
             if (!data || data === "[DONE]") continue;
             try {
               const parsed = JSON.parse(data) as {
-                response?: string;
-                choices?: { delta?: { content?: string }; message?: { content?: string } }[];
+                response?: unknown;
+                choices?: { delta?: { content?: unknown }; message?: { content?: unknown } }[];
               };
-              const text =
-                parsed.response ??
-                parsed.choices?.[0]?.delta?.content ??
-                parsed.choices?.[0]?.message?.content ??
-                "";
+              const content = parsed.response ?? parsed.choices?.[0]?.delta?.content ?? parsed.choices?.[0]?.message?.content;
+              const text = typeof content === "string"
+                ? content
+                : typeof content === "number" && Number.isFinite(content) ? String(content) : "";
               if (!text) continue;
               const payload = JSON.stringify({
                 id,
