@@ -140,51 +140,48 @@ async function bootstrap(): Promise<void> {
     }
   });
 
+  const storage = new IndexedDBStorage();
   const ui = new ChatUI({
     container: "#chatMount",
     provider,
-    storage: new IndexedDBStorage(),
+    storage,
     fullscreen: false,
     enableSidebar: true,
     routing: { type: "hash", pathPrefix: "#/chat/" },
     sidebarMenu: (defaults, ctx) => {
-      const messages = ctx.engine.state.messages;
-      const hasMessages = messages.length > 0;
+      const { id, title } = ctx.session;
+      const isActive = ctx.engine.state.currentSessionId === id;
+      const canExport = !isActive || ctx.engine.state.messages.length > 0;
+      const exportConversation = async (format: "md" | "json"): Promise<void> => {
+        try {
+          const messages = ctx.engine.state.currentSessionId === id
+            ? ctx.engine.state.messages
+            : (await storage.loadOne(id))?.messages;
+          if (!messages?.length) {
+            showStatusMessage("This conversation has no messages to export.");
+            return;
+          }
+          const metadata = { id, title };
+          const content = format === "md" ? toMarkdown(messages, metadata) : toJson(messages, metadata);
+          const mime = format === "md" ? "text/markdown" : "application/json";
+          downloadBlob(exportFilename(format, title), content, mime + ";charset=utf-8");
+        } catch {
+          showStatusMessage("Could not export this conversation.");
+        }
+      };
       return [
         ...defaults,
         {
           id: "export-md",
           label: "Export as Markdown",
-          disabled: !hasMessages,
-          onClick: () => {
-            if (!hasMessages) return;
-            const content = toMarkdown(messages, {
-              id: ctx.session.id,
-              title: ctx.session.title,
-            });
-            downloadBlob(
-              exportFilename("md", ctx.session.title),
-              content,
-              "text/markdown;charset=utf-8"
-            );
-          },
+          disabled: !canExport,
+          onClick: () => { void exportConversation("md"); },
         },
         {
           id: "export-json",
           label: "Export as JSON",
-          disabled: !hasMessages,
-          onClick: () => {
-            if (!hasMessages) return;
-            const content = toJson(messages, {
-              id: ctx.session.id,
-              title: ctx.session.title,
-            });
-            downloadBlob(
-              exportFilename("json", ctx.session.title),
-              content,
-              "application/json;charset=utf-8"
-            );
-          },
+          disabled: !canExport,
+          onClick: () => { void exportConversation("json"); },
         },
         {
           id: "import-conversation",
