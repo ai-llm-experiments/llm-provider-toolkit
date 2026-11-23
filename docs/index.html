@@ -1,77 +1,18 @@
-<!DOCTYPE html>
-<html lang="en" class="lf-chat-page">
-<head>
-  <meta charset="utf-8">
-  <title>llm-fallbacks — chat with free AI models</title>
-  <meta name="description" content="Chat with ranked free AI models. No signup. We try the next model if one fails.">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="./icon.png">
-  <link rel="manifest" href="./manifest.json">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="./assets/shell/styles.css">
-  <link rel="stylesheet" href="./assets/shell/chat-overrides.css">
-  <link rel="stylesheet" href="./assets/chat.css">
-  <script src="./config.js?v=dev"></script>
-</head>
-<body class="lf-chat-page">
-  <div class="credits-bar top-credits">
-    <div class="credits-content">
-      <p><strong>llm-fallbacks</strong> — chat with free AI models. No signup.</p>
-      <div id="lfStatusStrip" class="lf-status-strip" aria-live="polite"></div>
-      <div class="credits-actions">
-        <div id="sysSetting" class="top-settings-button" title="Which server handles your chat"><i class="fas fa-server"></i> Server</div>
-        <div id="byokSetting" class="top-settings-button" title="Add your own API keys in this browser"><i class="fas fa-key"></i> Your keys</div>
-        <div id="tiersSetting" class="top-settings-button" title="Order of chat routes (BYOK, runner, proxy)"><i class="fas fa-layer-group"></i> Tiers</div>
-        <div id="explorerSetting" class="top-settings-button" title="Browse free models we rank daily"><i class="fas fa-table"></i> Models</div>
-      </div>
-    </div>
-  </div>
-
-  <main class="main-chat-wrapper">
-    <div id="chatMount" class="mur-app mur-app-embedded mur-sidebar-animated mur-sidebar-closed" data-theme="dark">
-      <aside class="mur-sidebar">
-        <header class="mur-sidebar-header">
-          <div class="mur-sidebar-logo"><span>LF</span><span>llm-fallbacks</span></div>
-          <button type="button" class="mur-close-sidebar-btn" aria-label="Close sidebar">×</button>
-        </header>
-        <div class="mur-sidebar-actions">
-          <button type="button" class="mur-new-chat-btn mur-sidebar-nav-btn">New chat</button>
-        </div>
-        <div class="mur-sidebar-content"><p class="mur-sidebar-status">Loading…</p></div>
-        <div class="mur-sidebar-footer"></div>
-      </aside>
-      <main class="mur-main-area">
-        <header class="mur-main-header">
-          <button type="button" class="mur-open-sidebar-btn" aria-label="Open sidebar">☰</button>
-          <h2 class="mur-header-title">Chat</h2>
-        </header>
-        <div class="mur-chat-layout-wrapper">
-          <div class="mur-chat-scroll-area">
-            <div class="mur-chat-history" role="log"></div>
-          </div>
-          <div class="mur-chat-form-container">
-            <form class="mur-chat-form">
-              <textarea class="mur-chat-input" id="chatinput" rows="1" placeholder="Ask anything…" aria-label="Message"></textarea>
-              <div class="mur-form-footer-right">
-                <button type="submit" class="mur-send-btn mur-form-icon-btn mur-action-btn" id="sendbutton" aria-label="Send">↑</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </main>
-    </div>
-  </main>
-
-  <div id="sysMask" class="shell-panel-mask" hidden></div>
-  <aside id="shell-panel-failover" class="shell-panel"><div id="panel-failover"></div></aside>
-  <aside id="shell-panel-byok" class="shell-panel"><div id="panel-byok"></div></aside>
-  <aside id="shell-panel-tiers" class="shell-panel"><div id="panel-tiers"></div></aside>
-  <aside id="shell-panel-explorer" class="shell-panel"><div id="panel-explorer"></div></aside>
-  <button type="button" id="closeSet" title="Close panel">× Close</button>
-
-  <script type="module" src="./assets/chat.js?v=dev"></script>
-</body>
-</html>
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM Provider Toolkit</title><link rel="stylesheet" href="./toolkit/toolkit.css"></head>
+<body>
+<header><a class="brand" href="./">LLM Provider Toolkit</a><nav><a href="https://github.com/ai-llm-experiments/llm-provider-toolkit">GitHub</a><a href="./chat/">Chat demo ↗</a></nav></header>
+<main>
+<section class="intro"><h1>Explore the model catalog.</h1><p>Compare model capabilities and pricing, inspect provider endpoints, and turn a selection into a LiteLLM config.</p></section>
+<nav class="views" aria-label="Toolkit views"><a href="#models">Models</a><a href="#providers">Providers</a><a href="#parser">JSON parser</a><a href="#exports">Exports</a></nav>
+<section id="models"><h2>Models</h2>
+<form id="filters"><label>Search<input id="query" type="search" placeholder="Model or provider"></label><label>Provider<select id="provider"><option value="">All providers</option></select></label><label>Mode<select id="mode"><option value="">All modes</option></select></label><label>Capability<select id="capability"><option value="">Any capability</option><option value="supports_vision">Vision</option><option value="supports_function_calling">Function calling</option><option value="supports_response_schema">Response schema</option><option value="supports_prompt_caching">Prompt caching</option></select></label><label>Sort by<select id="sort"><option value="name">Model ID</option><option value="input_cost_per_token">Input price</option><option value="output_cost_per_token">Output price</option><option value="max_input_tokens">Input limit</option></select></label></form>
+<p id="status" role="status">Loading catalog…</p>
+<div class="table"><table><thead><tr><th scope="col">Select</th><th scope="col">Model ID</th><th scope="col">Provider</th><th scope="col">Mode</th><th scope="col">Input / 1M</th><th scope="col">Output / 1M</th><th scope="col">Input limit</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="actions"><button id="prev">Previous</button><span id="page"></span><button id="next">Next</button></div>
+<p>Prices are catalog estimates in USD per million tokens. Unknown values appear as a dash.</p></section>
+<section id="providers"><h2>Provider endpoints</h2><p>Browse the API base URLs published by this repository. Select a provider to filter the model catalog.</p><div class="table"><table><thead><tr><th scope="col">Provider</th><th scope="col">API base URL</th></tr></thead><tbody id="endpoints"></tbody></table></div></section>
+<section id="parser"><h2>Parse a model listing</h2><p>Paste an OpenAI-compatible or OpenRouter-style <code>/models</code> JSON response. The preview runs in your browser.</p><label for="payload">Response JSON</label><textarea id="payload" rows="6" spellcheck="false"></textarea><div class="actions"><button id="sample">Load example</button><button id="parse">Parse response</button></div><pre id="parsed" aria-live="polite"></pre></section>
+<section id="exports"><h2>Exports</h2><p>Select models in the catalog to assemble a LiteLLM configuration. The generated JSON is valid YAML and includes environment-variable references where the catalog provides them.</p><div class="actions"><button id="download" disabled>Download selection</button><button id="clear" disabled>Clear selection</button></div><div class="table" id="comparison"></div><pre id="export" aria-live="polite">No models selected.</pre><ul id="artifacts"></ul></section>
+</main><script type="module" src="./toolkit/toolkit.js"></script></body></html>

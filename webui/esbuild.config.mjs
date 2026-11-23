@@ -21,7 +21,10 @@ function copyShellAssets() {
 function writeIndexHtml() {
   const template = readFileSync(join(root, "index.template.html"), "utf8");
   const html = template.replaceAll("__APP_VERSION__", appVersion);
-  writeFileSync(join(docsDir, "index.html"), html);
+  const chatDir = join(docsDir, "chat");
+  mkdirSync(chatDir, { recursive: true });
+  writeFileSync(join(chatDir, "index.html"), html.replace("<head>", '<head><base href="../">'));
+
 }
 
 const buildOptions = {

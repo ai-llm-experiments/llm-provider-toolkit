@@ -2,7 +2,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 /** Production GitHub Pages — no local http.server; tests always hit the live site. */
 export const PAGES_BASE_URL =
-  process.env.PAGES_BASE_URL || "https://bodencrouch.github.io/llm_fallbacks/";
+  process.env.PAGES_BASE_URL && process.env.PAGES_BASE_URL !== "https://bodencrouch.github.io/llm_fallbacks/"
+    ? process.env.PAGES_BASE_URL
+    : "https://ai-llm-experiments.github.io/llm-provider-toolkit/chat/";
 
 export default defineConfig({
   testDir: "tests/e2e",

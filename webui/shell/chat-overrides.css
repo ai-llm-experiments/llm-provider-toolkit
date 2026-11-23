@@ -151,7 +151,7 @@ body.lf-chat-page::before {
 }
 
 #chatMount.mur-app-embedded.mur-chat-empty .mur-chat-layout-wrapper::before {
-  content: "Ranked free models, zero config";
+  content: "Try a model route";
   display: block;
   position: absolute;
   top: 36%;
@@ -167,7 +167,7 @@ body.lf-chat-page::before {
 }
 
 #chatMount.mur-app-embedded.mur-chat-empty .mur-chat-layout-wrapper::after {
-  content: "Daily-updated catalog via edge proxy. Pick a model above or send a message. Optional BYOK for direct routes.";
+  content: "Choose a model to try, or compare two routes with the same prompt.";
   display: block;
   position: absolute;
   top: 44%;
