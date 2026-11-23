@@ -19,7 +19,7 @@ export function ModelPickerPlugin(): ChatPlugin {
     const active = getActiveModel();
     const pinned = getPinnedModels().find((p) => p.id === active);
     if (pinned) {
-      detailEl.textContent = "Provider-managed routing option";
+      detailEl.textContent = pinned.id.includes("free") ? "Provider-managed routing option" : "";
       return;
     }
     const entry = findCatalogEntry(active);

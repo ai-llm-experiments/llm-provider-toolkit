@@ -4,6 +4,7 @@ import type { CatalogEntry } from "./providers/browser-router";
 export const MODEL_CHANGED_EVENT = "llm-fallbacks:model-changed";
 
 const PINNED_MODELS: { id: string; label: string }[] = [
+  { id: "@cf/meta/llama-3.1-8b-instruct-fast", label: "Llama 3.1 8B Instruct (Cloudflare)" },
   { id: "free", label: "free (ranked alias)" },
   { id: "openrouter/free", label: "openrouter/free (OpenRouter router)" },
 ];

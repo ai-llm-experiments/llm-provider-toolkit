@@ -19,7 +19,7 @@ import {
 } from "./routing";
 import type { ChatBody, Env } from "./types";
 import { RETRYABLE } from "./types";
-import { callWorkersAI, callWorkersAIStream } from "./workers-ai";
+import { callWorkersAI, callWorkersAIStream, workersAIModel } from "./workers-ai";
 
 async function callUpstream(litellmId: string, body: ChatBody, env: Env): Promise<Response> {
   const parsed = upstreamModelId(litellmId);
@@ -209,13 +209,17 @@ export default {
     }
     body.stream = body.stream ?? false;
 
-    if (!isModelAllowed(body.model, env)) {
+    const directWorkersAI = body.model === workersAIModel(env);
+    if (!directWorkersAI && !isModelAllowed(body.model, env)) {
       return jsonError(`Model not allowlisted: ${body.model}`, 400, origin, allowed);
     }
 
-    const upstream = await chatWithFallback(body, env, origin, allowed);
+    const upstream = directWorkersAI
+      ? await (body.stream ? callWorkersAIStream(body, env, origin, allowed) : callWorkersAI(body, env))
+      : await chatWithFallback(body, env, origin, allowed);
 
     const headers = new Headers(upstream.headers);
+    if (directWorkersAI && upstream.ok) headers.set("x-litellm-model-name", workersAIModel(env));
     try {
       headers.set("x-llm-fallbacks-endpoint", new URL(request.url).hostname);
     } catch {

@@ -3,8 +3,12 @@ import { extractWorkersAIContent } from "./routing";
 import type { ChatBody, Env } from "./types";
 import { DEFAULT_WORKERS_AI_MODEL } from "./types";
 
+export function workersAIModel(env: Env): string {
+  return env.WORKERS_AI_MODEL || DEFAULT_WORKERS_AI_MODEL;
+}
+
 async function workersAIText(body: ChatBody, env: Env): Promise<string | null> {
-  const model = env.WORKERS_AI_MODEL || DEFAULT_WORKERS_AI_MODEL;
+  const model = workersAIModel(env);
   try {
     const result = await env.AI.run(model, {
       messages: body.messages,
@@ -102,7 +106,7 @@ export async function callWorkersAIStream(
   origin: string | null,
   allowed: string[],
 ): Promise<Response> {
-  const model = env.WORKERS_AI_MODEL || DEFAULT_WORKERS_AI_MODEL;
+  const model = workersAIModel(env);
   try {
     const aiStream = await env.AI.run(model, {
       messages: body.messages,
