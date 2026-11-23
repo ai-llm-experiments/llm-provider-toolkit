@@ -7,10 +7,9 @@ export function upstreamModelId(litellmId: string): { provider: string; apiModel
 }
 
 export function normalizeClientModel(model?: string): string {
-  if (!model || model === "free") return "free";
-  const pipe = model.indexOf("|");
-  if (pipe > 0) return model.slice(pipe + 1) || "free";
-  return model;
+  const value = typeof model === "string" ? model.trim() : "";
+  const pipe = value.indexOf("|");
+  return pipe > 0 ? value.slice(pipe + 1).trim() : value;
 }
 
 export function modelChain(env: Env): string[] {

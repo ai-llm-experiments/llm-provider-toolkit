@@ -111,6 +111,10 @@ async function chatWithFallback(
     lastResponse = res;
   }
 
+  if (normalized.model !== "free") {
+    return lastResponse ?? jsonError("Selected model is unavailable on this server.", 503, origin, allowed);
+  }
+
   if (normalized.stream) {
     return callWorkersAIStream(normalized, env, origin, allowed);
   }
@@ -199,7 +203,10 @@ export default {
       body.max_tokens = cap;
     }
 
-    body.model = normalizeClientModel(body.model) || "free";
+    body.model = normalizeClientModel(body.model);
+    if (!body.model) {
+      return jsonError("An explicit model ID is required.", 400, origin, allowed);
+    }
     body.stream = body.stream ?? false;
 
     if (!isModelAllowed(body.model, env)) {

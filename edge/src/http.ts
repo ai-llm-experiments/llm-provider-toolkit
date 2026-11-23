@@ -15,6 +15,7 @@ export function corsHeaders(origin: string | null, allowed: string[]): HeadersIn
   const match = origin && allowed.includes(origin) ? origin : allowed[0] ?? "";
   return {
     "Access-Control-Allow-Origin": match,
+    "Vary": "Origin",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, Content-Type",
     "Access-Control-Expose-Headers": EXPOSED_RESPONSE_HEADERS,
