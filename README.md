@@ -16,6 +16,7 @@ A Python toolkit and browser workbench for working with LLM providers, model cat
 - **Browser workbench** — [Explore models and endpoints](https://ai-llm-experiments.github.io/llm-provider-toolkit/), parse model responses, and export a config.
 - **Chat demo** — [Choose a model and try its route](https://ai-llm-experiments.github.io/llm-provider-toolkit/chat/).
 - **Desktop explorer** — Browse models with `python -m llm_fallbacks`.
+- **Catalog MCP integration** — Search a bundled, offline snapshot from Codex or Claude Desktop. See [installation and limitations](integrations/catalog-plugin/README.md).
 
 ## Install
 
