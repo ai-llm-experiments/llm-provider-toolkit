@@ -196,12 +196,17 @@ async function bootstrap(): Promise<void> {
           label: "Copy session link",
           onClick: async () => {
             const hash = `#/chat/${encodeURIComponent(ctx.session.id)}`;
-            const url = `${window.location.origin}${window.location.pathname}${window.location.search}${hash}`;
+            const url = `${window.location.origin}${window.location.pathname}${hash}`;
             try {
               await navigator.clipboard.writeText(url);
               showStatusMessage("Session link copied (local browser only).");
             } catch {
-              window.prompt("Copy session link:", url);
+              const dialog = document.querySelector<HTMLDialogElement>("#session-link-dialog");
+              const field = document.querySelector<HTMLInputElement>("#session-link-value");
+              if (!dialog || !field) return;
+              field.value = url;
+              dialog.showModal();
+              field.select();
             }
           },
         },
