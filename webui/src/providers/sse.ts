@@ -119,6 +119,7 @@ export async function emitOpenAiSseAsStreamEvents(
   startedAt = performance.now()
 ): Promise<StreamTimingResult> {
   let messageStarted = false;
+  let hasReplyContent = false;
   let currentMessageId = randomId();
   let currentTextBlockId: string | null = null;
   let currentReasoningBlockId: string | null = null;
@@ -191,6 +192,7 @@ export async function emitOpenAiSseAsStreamEvents(
 
     // 3. Handle text content
     if (delta.content) {
+      if (delta.content.trim()) hasReplyContent = true;
       markFirstToken();
       if (!currentTextBlockId) currentTextBlockId = randomId();
       onEvent({
@@ -206,6 +208,7 @@ export async function emitOpenAiSseAsStreamEvents(
       for (const tc of delta.tool_calls) {
         const index = tc.index;
         if (tc.id) {
+          hasReplyContent = true;
           currentTextBlockId = null;
           const blockId = randomId();
           activeToolCalls.set(index, blockId);
@@ -248,7 +251,7 @@ export async function emitOpenAiSseAsStreamEvents(
     }
   });
 
-  if (!messageStarted) throw new Error("The selected route returned no response content.");
+  if (!hasReplyContent) throw new Error("The selected route returned no reply text or tool call.");
 
   if (!finishEmitted) {
     onEvent({ type: "finish", reason: "stop" });
