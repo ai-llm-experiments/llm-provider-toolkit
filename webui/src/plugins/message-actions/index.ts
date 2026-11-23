@@ -9,10 +9,6 @@ function extractText(msg: Message): string {
     .join("");
 }
 
-function newBlockId(): string {
-  return crypto.randomUUID();
-}
-
 function findUserForAssistant(engine: ChatEngine, assistantMsg: Message): Message | null {
   const messages = engine.state.messages;
   const idx = messages.findIndex((m) => m.id === assistantMsg.id);
@@ -28,17 +24,14 @@ const ICON_EDIT = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" s
 
 export function MessageActionsPlugin(): ChatPlugin {
   let engine: ChatEngine | null = null;
-  let root: HTMLElement | null = null;
   let editDialog: HTMLDialogElement | null = null;
   let editText: HTMLTextAreaElement | null = null;
   let target: Message | null = null;
-  let restoreStop: (() => void) | null = null;
 
   return {
     name: "message-actions",
     onMount(ctx) {
       engine = ctx.engine;
-      root = ctx.container;
       const dialog = document.createElement("dialog");
       dialog.className = "lf-chat-dialog";
       dialog.setAttribute("aria-labelledby", "lf-edit-heading");
@@ -65,38 +58,7 @@ export function MessageActionsPlugin(): ChatPlugin {
         if (!text && !messageHasImage(message)) return;
         if (text !== extractText(message).trim()) engine.editAndResubmit(message.id, text);
       });
-      const origStop = ctx.engine.stopGeneration.bind(ctx.engine);
-      restoreStop = () => { ctx.engine.stopGeneration = origStop; };
-      ctx.engine.stopGeneration = async () => {
-        const generatingId = ctx.engine.state.generatingMessageId;
-        let partialText = "";
-        if (generatingId) {
-          const pending = ctx.engine.state.messages.find((m) => m.id === generatingId);
-          if (pending) partialText = extractText(pending);
-        }
-        if (!partialText.trim() && root) {
-          const live = root.querySelector(".mur-message-assistant.mur-generating .mur-message-blocks-wrapper");
-          partialText = (live?.textContent ?? "").trim();
-        }
-        await origStop();
-        await new Promise((r) => setTimeout(r, 50));
-        if (partialText.trim() && !ctx.engine.isBusy) {
-          const lastUser = [...ctx.engine.state.messages].reverse().find((m) => m.role === "user");
-          const now = Date.now();
-          const assistantId = newBlockId();
-          await ctx.engine.setMessages([
-            ...ctx.engine.state.messages,
-            {
-              id: assistantId,
-              role: "assistant",
-              blocks: [{ id: newBlockId(), type: "text", text: partialText }],
-              runId: lastUser?.runId ?? lastUser?.id ?? assistantId,
-              createdAt: now,
-              updatedAt: now,
-            },
-          ]);
-        }
-      };
+
     },
     getActionButtons(msg) {
       if (!engine) return [];
@@ -139,11 +101,9 @@ export function MessageActionsPlugin(): ChatPlugin {
       return [];
     },
     destroy() {
-      restoreStop?.();
       editDialog?.remove();
       target = null;
       engine = null;
-      root = null;
     },
   };
 }
