@@ -63,14 +63,12 @@ export async function mergeChatProxyArtifact(config: AppConfig): Promise<AppConf
       endpoints?: string[];
       guestToken?: string;
     };
-    const merged = normalizeEndpoints([
-      ...config.endpoints,
-      ...(proxyCfg.endpoints || []),
-    ]);
-    const unique = [...new Set(merged)];
+    const published = normalizeEndpoints(proxyCfg.endpoints);
+    const hasSavedEndpoints = normalizeEndpoints(loadJson<string[]>(STORAGE_KEYS.endpoints, [])).length > 0;
+    const endpoints = hasSavedEndpoints || !published.length ? config.endpoints : published;
     return {
       ...config,
-      endpoints: unique,
+      endpoints: [...new Set(endpoints)],
       guestToken: proxyCfg.guestToken || config.guestToken,
     };
   } catch {
