@@ -22,7 +22,7 @@ Then in the chat demo: **Tiers panel → enable "Local web UI" → set runner UR
 | `GET /health` | `{ "ok": true, "adapter": "stub" \| "generic-selector" \| null }` |
 | `POST /v1/chat/completions` | OpenAI-style SSE stream; **501** until an adapter is configured |
 
-CORS allows `localhost` / `127.0.0.1` (any port) and `https://*.github.io` origins.
+The runner accepts requests from `localhost` and `127.0.0.1` on any port and from the [Toolkit chat demo](https://ai-llm-experiments.github.io/llm-provider-toolkit/chat/). Set `RUNNER_ALLOWED_ORIGINS` to a comma-separated list of additional trusted origins for other deployments.
 
 ## Configuration
 

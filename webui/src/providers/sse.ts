@@ -141,12 +141,15 @@ export async function emitOpenAiSseAsStreamEvents(
       choices?: Choice[];
       usage?: unknown;
       id?: string;
+      error?: { message?: string };
     };
     try {
       parsed = JSON.parse(data);
     } catch {
       return;
     }
+
+    if (parsed.error) throw new Error(parsed.error.message || "The selected route returned a stream error.");
 
     // Emit usage events from trailing usage chunks
     const parsedUsage = parseUsage(parsed.usage);

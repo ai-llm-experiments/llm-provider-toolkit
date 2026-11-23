@@ -16,15 +16,27 @@ import type { ChatMessage, RunnerAdapter } from "./adapters/types.ts";
 const DEFAULT_PORT = 8815;
 
 // Browser callers are the local dev shell or the GitHub Pages demo.
-const ALLOWED_ORIGIN_RE = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$|^https:\/\/[\w-]+\.github\.io$/;
+const LOOPBACK_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+const hostedOrigins = new Set([
+  "https://ai-llm-experiments.github.io",
+  ...(process.env.RUNNER_ALLOWED_ORIGINS ?? "").split(",").map((value) => value.trim()).filter(Boolean),
+]);
+
+function isAllowedOrigin(origin: string): boolean {
+  return LOOPBACK_ORIGIN.test(origin) || hostedOrigins.has(origin);
+}
 
 function applyCors(req: IncomingMessage, res: ServerResponse): void {
   const origin = req.headers.origin;
-  if (origin && ALLOWED_ORIGIN_RE.test(origin)) {
+  if (origin && isAllowedOrigin(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Vary", "Origin");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    if (req.headers["access-control-request-private-network"] === "true") {
+      res.setHeader("Access-Control-Allow-Private-Network", "true");
+      res.setHeader("Vary", "Origin, Access-Control-Request-Private-Network");
+    }
   }
 }
 
@@ -78,7 +90,7 @@ async function handleChat(
   });
 
   const abort = new AbortController();
-  req.on("close", () => abort.abort());
+  res.once("close", () => { if (!res.writableFinished) abort.abort(); });
 
   try {
     await adapter.streamReply(
@@ -111,6 +123,10 @@ export function createRunnerServer(adapter: RunnerAdapter | null): Server {
       return;
     }
     if (req.method === "POST" && req.url === "/v1/chat/completions") {
+      if (req.headers.origin && !isAllowedOrigin(req.headers.origin)) {
+        sendJson(res, 403, { error: { message: "Origin is not permitted by this runner." } });
+        return;
+      }
       void handleChat(adapter, req, res);
       return;
     }

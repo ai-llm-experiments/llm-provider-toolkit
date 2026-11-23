@@ -389,33 +389,21 @@ export class FailoverProvider implements ChatProvider {
       );
     }
     this.setStatus(`web runner: ${settings.webRunnerUrl} …`);
-    let metaSet = false;
-    await streamFromWebRunner({
+    const timing = await streamFromWebRunner({
       runnerUrl: settings.webRunnerUrl,
       model,
       messages: plainMessages,
       maxTokens: body.max_tokens as number,
       signal: request.signal,
-      onEvent: (event) => {
-        // Record the route once the runner actually starts streaming, so a
-        // pre-stream failure never leaves stale web_ui routing metadata.
-        if (!metaSet) {
-          metaSet = true;
-          this.lastRoute = `web_ui/${settings.webRunnerUrl}`;
-          window.LLM_FALLBACKS_ROUTE = this.lastRoute;
-          const totalMs = this.requestStartedAt
-            ? Math.max(0, performance.now() - this.requestStartedAt)
-            : undefined;
-          setLastCompletionMeta({
-            endpoint: this.lastRoute,
-            fallbackCount: 0,
-            trace: this.activeTrace?.snapshot(),
-            ttftMs: totalMs,
-            totalMs,
-          });
-        }
-        onEvent(event);
-      },
+      onEvent,
+    });
+    this.lastRoute = `web_ui/${settings.webRunnerUrl}`;
+    window.LLM_FALLBACKS_ROUTE = this.lastRoute;
+    setLastCompletionMeta({
+      endpoint: this.lastRoute,
+      fallbackCount: 0,
+      trace: this.activeTrace?.snapshot(),
+      ...timing,
     });
   }
 

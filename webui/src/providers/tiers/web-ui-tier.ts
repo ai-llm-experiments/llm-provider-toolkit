@@ -5,7 +5,7 @@
  * bridge. Off by default; the public Pages demo never requires it.
  */
 import type { StreamEvent } from "murm-ui";
-import { emitOpenAiSseAsStreamEvents } from "../sse";
+import { emitOpenAiSseAsStreamEvents, type StreamTimingResult } from "../sse";
 
 export class WebRunnerNotConfiguredError extends Error {
   constructor(runnerUrl: string, detail: string) {
@@ -39,8 +39,10 @@ export async function streamFromWebRunner(options: {
   signal: AbortSignal;
   onEvent: (event: StreamEvent) => void;
   fetchImpl?: typeof fetch;
-}): Promise<void> {
+}): Promise<StreamTimingResult> {
   const doFetch = options.fetchImpl ?? fetch;
+  const startedAt = performance.now();
+  const signal = AbortSignal.any([options.signal, AbortSignal.timeout(60_000)]);
 
   let res: Response;
   try {
@@ -53,7 +55,7 @@ export async function streamFromWebRunner(options: {
         max_tokens: options.maxTokens,
         stream: true,
       }),
-      signal: options.signal,
+      signal,
     });
   } catch (err) {
     if (options.signal.aborted) throw err;
@@ -73,5 +75,5 @@ export async function streamFromWebRunner(options: {
     );
   }
 
-  await emitOpenAiSseAsStreamEvents(res, options.onEvent);
+  return emitOpenAiSseAsStreamEvents(res, options.onEvent, startedAt);
 }
