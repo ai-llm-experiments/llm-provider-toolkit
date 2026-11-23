@@ -11,7 +11,7 @@ cache:
   ttl: 600
   type: redis
 general_settings:
-  master_key: sk-cf38bf12bd174ee1bad2f256edf157b3
+  master_key: os.environ/LITELLM_MASTER_KEY
   alerting:
   - slack
   - email
@@ -21,7 +21,7 @@ general_settings:
   allow_requests_on_db_unavailable: true
   allowed_routes: []
   background_health_checks: true
-  database_url: postgresql://postgres:None@localhost:5432/postgres
+  database_url: os.environ/DATABASE_URL
   disable_adding_master_key_hash_to_db: false
   disable_master_key_return: false
   disable_reset_budget: false
@@ -52,102 +52,123 @@ litellm_settings:
   set_verbose: false
   turn_off_message_logging: false
 model_list:
-- model_name: inclusionai/ling-3.0-flash:free
+- model_name: inclusionai/ling-3.2-flash:free
   litellm_params:
-    model: openai/inclusionai/ling-3.0-flash:free
+    model: openai/inclusionai/ling-3.2-flash:free
     api_base: https://openrouter.ai/api/v1
     api_key: os.environ/OPENROUTER_API_KEY
     input_cost_per_token: 0.0
     output_cost_per_token: 0.0
-    max_input_tokens: 262144
-    max_output_tokens: 32768
-    metadata:
-      notes: '*Ling-3.0-flash* is a *124B-parameter Mixture-of-Experts (MoE) model*,
-        with approximately *5.1B parameters activated per token*. The model is designed
-        with *token efficiency and production-scale agentic inference* as key priorities,
-        enabling developers...'
-    litellm_provider: openrouter
-- model_name: poolside/laguna-s-2.1:free
-  litellm_params:
-    model: openai/poolside/laguna-s-2.1:free
-    api_base: https://openrouter.ai/api/v1
-    api_key: os.environ/OPENROUTER_API_KEY
-    input_cost_per_token: 0.0
-    output_cost_per_token: 0.0
-    max_input_tokens: 262144
-    max_output_tokens: 32768
-    metadata:
-      notes: Laguna S 2.1 is the latest coding agent model from [Poolside](<https://poolside.ai/>).
-        Laguna S 2.1 is a 118B total parameter model with 8B active parameters, scoring
-        70.2% on Terminal-Bench 2.1 and...
-    litellm_provider: openrouter
-- model_name: openrouter/auto-beta
-  litellm_params:
-    model: openai/openrouter/auto-beta
-    api_base: https://openrouter.ai/api/v1
-    api_key: os.environ/OPENROUTER_API_KEY
-    input_cost_per_token: -1.0
-    output_cost_per_token: -1.0
-    metadata:
-      notes: Auto Router (Beta) is a task-aware router from OpenRouter. It classifies
-        each request, then routes it the [most popular model](/rankings#task-spend)
-        for that task based on aggregate spend, filtered by your...
-    litellm_provider: openrouter
-- model_name: poolside/laguna-xs-2.1:free
-  litellm_params:
-    model: openai/poolside/laguna-xs-2.1:free
-    api_base: https://openrouter.ai/api/v1
-    api_key: os.environ/OPENROUTER_API_KEY
-    input_cost_per_token: 0.0
-    output_cost_per_token: 0.0
-    max_input_tokens: 262144
-    max_output_tokens: 32768
-    metadata:
-      notes: Laguna XS 2.1 is the latest coding agent model in the 33B-A3B category
-        from [Poolside](https://poolside.ai/) and a step forward from their Laguna
-        XS.2 model (released in April 2026). It combines...
-    litellm_provider: openrouter
-- model_name: cohere/north-mini-code:free
-  litellm_params:
-    model: openai/cohere/north-mini-code:free
-    api_base: https://openrouter.ai/api/v1
-    api_key: os.environ/OPENROUTER_API_KEY
-    input_cost_per_token: 0.0
-    output_cost_per_token: 0.0
-    max_input_tokens: 256000
-    max_output_tokens: 64000
-    metadata:
-      notes: North Mini Code is Cohere's first agentic coding model and the debut
-        of its North family. A sparse mixture-of-experts model with 30B total parameters
-        and 3B active, it is optimized...
-    litellm_provider: openrouter
-- model_name: openrouter/fusion
-  litellm_params:
-    model: openai/openrouter/fusion
-    api_base: https://openrouter.ai/api/v1
-    api_key: os.environ/OPENROUTER_API_KEY
-    input_cost_per_token: -1.0
-    output_cost_per_token: -1.0
-    metadata:
-      notes: Fusion turns your prompt into a small multi-model deliberation. A panel
-        of expert models (see below) analyzes your prompt in parallel with web search
-        and web fetch enabled, then a...
-    litellm_provider: openrouter
-- model_name: nvidia/nemotron-3.5-content-safety:free
-  litellm_params:
-    model: openai/nvidia/nemotron-3.5-content-safety:free
-    api_base: https://openrouter.ai/api/v1
-    api_key: os.environ/OPENROUTER_API_KEY
-    input_cost_per_token: 0.0
-    output_cost_per_token: 0.0
-    max_input_tokens: 128000
-    max_output_tokens: 8192
+    max_input_tokens: 1048576
+    max_output_tokens: 262144
     mode: chat
     supports_vision: true
     metadata:
-      notes: NVIDIA Nemotron 3.5 Content Safety is a compact 4B-parameter multimodal
-        guardrail model from NVIDIA, fine-tuned from Google Gemma-3-4B. It moderates
-        both inputs to and responses from LLMs and VLMs, accepting...
+      notes: Ling 3.2 Flash is a hybrid reasoning model from inclusionAI that accepts
+        text and image input, with a 1M-token context window and up to 200 images
+        per request. Thinking can...
+    litellm_provider: openrouter
+- model_name: baidu/ernie-5.5-flash-preview:free
+  litellm_params:
+    model: openai/baidu/ernie-5.5-flash-preview:free
+    api_base: https://openrouter.ai/api/v1
+    api_key: os.environ/OPENROUTER_API_KEY
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    max_input_tokens: 1024000
+    max_output_tokens: 921600
+    metadata:
+      notes: ERNIE 5.5 Flash Preview is the latest foundation model in the ERNIE family,
+        with comprehensive improvements in coding, agentic capabilities, knowledge
+        work, and deep research. It has 280 billion total...
+    litellm_provider: openrouter
+- model_name: liquid/lfm-3-1.7b:free
+  litellm_params:
+    model: openai/liquid/lfm-3-1.7b:free
+    api_base: https://openrouter.ai/api/v1
+    api_key: os.environ/OPENROUTER_API_KEY
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    max_input_tokens: 262144
+    max_output_tokens: 8192
+    metadata:
+      notes: A compact 1.7B-parameter text model with a 256K-token context, post-trained
+        for agents, tool calling, and structured outputs. It reasons before it answers.
+        Prompts and outputs may be retained and used...
+    litellm_provider: openrouter
+- model_name: particle-ai/particle-1:free
+  litellm_params:
+    model: openai/particle-ai/particle-1:free
+    api_base: https://openrouter.ai/api/v1
+    api_key: os.environ/OPENROUTER_API_KEY
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    max_input_tokens: 1048576
+    max_output_tokens: 131072
+    mode: chat
+    supports_vision: true
+    metadata:
+      notes: Particle-1 is a token-efficient agentic coding model from Particle AI,
+        post-trained on DeepSeek V4.1 Flash. It is suited for software engineering
+        work such as terminal workflows, codebase changes, and data...
+    litellm_provider: openrouter
+- model_name: recursive/flint-v1.0:free
+  litellm_params:
+    model: openai/recursive/flint-v1.0:free
+    api_base: https://openrouter.ai/api/v1
+    api_key: os.environ/OPENROUTER_API_KEY
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    max_input_tokens: 262144
+    max_output_tokens: 235929
+    metadata:
+      notes: Flint is an open-weight mixture-of-experts model from Recursive, with
+        about 2.5B active parameters out of 40B total, built by Recursive's autoresearch
+        system Eureka Machine for coding agents. It is suited...
+    litellm_provider: openrouter
+- model_name: nvidia/nemotron-3.5-super-vl:free
+  litellm_params:
+    model: openai/nvidia/nemotron-3.5-super-vl:free
+    api_base: https://openrouter.ai/api/v1
+    api_key: os.environ/OPENROUTER_API_KEY
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    max_input_tokens: 1000000
+    max_output_tokens: 131072
+    metadata:
+      notes: NVIDIA Nemotron 3.5 Super VL is an open multimodal mixture-of-experts
+        model from NVIDIA, with 12B active parameters out of 120B total. It takes
+        text, images, documents, GUI screenshots, and video...
+    litellm_provider: openrouter
+- model_name: dots-studio/dots-3-note-preview:free
+  litellm_params:
+    model: openai/dots-studio/dots-3-note-preview:free
+    api_base: https://openrouter.ai/api/v1
+    api_key: os.environ/OPENROUTER_API_KEY
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    max_input_tokens: 512000
+    max_output_tokens: 460800
+    mode: chat
+    supports_vision: true
+    metadata:
+      notes: Dots3-Note Preview is an open-weight mixture-of-experts model from Dots
+        Studio, with 16B active parameters out of 280B total. It is the lightest model
+        in the Dots 3 family and is...
+    litellm_provider: openrouter
+- model_name: nvidia/nemotron-3.5-lightning:free
+  litellm_params:
+    model: openai/nvidia/nemotron-3.5-lightning:free
+    api_base: https://openrouter.ai/api/v1
+    api_key: os.environ/OPENROUTER_API_KEY
+    input_cost_per_token: 0.0
+    output_cost_per_token: 0.0
+    max_input_tokens: 1000000
+    max_output_tokens: 65536
+    metadata:
+      notes: NVIDIA Nemotron 3.5 Lightning is an open mixture-of-experts model from
+        NVIDIA, with 3B active parameters out of 30B total. It is suited for high-throughput
+        agentic workloads and specialized tasks that...
     litellm_provider: openrouter
 - model_name: nvidia/nemotron-3-ultra-550b-a55b:free
   litellm_params:
@@ -177,33 +198,6 @@ model_list:
         to function as a perception and context sub-agent in enterprise agent systems.
         It accepts text, image, video, and...
     litellm_provider: openrouter
-- model_name: poolside/laguna-m.1:free
-  litellm_params:
-    model: openai/poolside/laguna-m.1:free
-    api_base: https://openrouter.ai/api/v1
-    api_key: os.environ/OPENROUTER_API_KEY
-    input_cost_per_token: 0.0
-    output_cost_per_token: 0.0
-    max_input_tokens: 262144
-    max_output_tokens: 32768
-    metadata:
-      notes: Laguna M.1 is the flagship coding agent model from [Poolside](https://poolside.ai/),
-        optimized for complex software engineering tasks. Designed for agentic coding
-        workflows, it supports tool calling and reasoning, with a 256K...
-    litellm_provider: openrouter
-- model_name: openrouter/pareto-code
-  litellm_params:
-    model: openai/openrouter/pareto-code
-    api_base: https://openrouter.ai/api/v1
-    api_key: os.environ/OPENROUTER_API_KEY
-    input_cost_per_token: -1.0
-    output_cost_per_token: -1.0
-    metadata:
-      notes: The Pareto Router maintains a tiered shortlist of strong coding models,
-        ranked by [Artificial Analysis](https://artificialanalysis.ai/) coding percentiles.
-        Set min_coding_score between 0 and 1 on the [pareto-router plugin](https://openrouter.ai/docs/guides/routing/routers/pareto-router#the-min_coding_score-parameter)
-        to control how...
-    litellm_provider: openrouter
 - model_name: google/gemma-4-26b-a4b-it:free
   litellm_params:
     model: openai/google/gemma-4-26b-a4b-it:free
@@ -211,7 +205,7 @@ model_list:
     api_key: os.environ/OPENROUTER_API_KEY
     input_cost_per_token: 0.0
     output_cost_per_token: 0.0
-    max_input_tokens: 131072
+    max_input_tokens: 262144
     max_output_tokens: 32768
     metadata:
       notes: Gemma 4 26B A4B IT is an instruction-tuned Mixture-of-Experts (MoE) model
@@ -260,19 +254,93 @@ model_list:
         family of music generation models, available through the Gemini API. With
         Lyria 3, you can generate...
     litellm_provider: openrouter
-- model_name: nvidia/nemotron-3-super-120b-a12b:free
+- model_name: openrouter/auto
   litellm_params:
-    model: openai/nvidia/nemotron-3-super-120b-a12b:free
+    model: openai/openrouter/auto
     api_base: https://openrouter.ai/api/v1
     api_key: os.environ/OPENROUTER_API_KEY
-    input_cost_per_token: 0.0
-    output_cost_per_token: 0.0
-    max_input_tokens: 262144
-    max_output_tokens: 262144
+    input_cost_per_token: -1.0
+    output_cost_per_token: -1.0
     metadata:
-      notes: NVIDIA Nemotron 3 Super is a 120B-parameter open hybrid MoE model, activating
-        just 12B parameters for maximum compute efficiency and accuracy in complex
-        multi-agent applications. Built on a hybrid Mamba-Transformer...
+      notes: Auto is OpenRouter’s flagship model router, built for general-purpose
+        usage. It adapts to each request, choosing cost-optimal models and adjusting
+        reasoning effort. It balances task difficulty, benchmark results, live prices,...
+    litellm_provider: openrouter
+- model_name: openrouter/auto-code
+  litellm_params:
+    model: openai/openrouter/auto-code
+    api_base: https://openrouter.ai/api/v1
+    api_key: os.environ/OPENROUTER_API_KEY
+    input_cost_per_token: -1.0
+    output_cost_per_token: -1.0
+    max_output_tokens: 128000
+    metadata:
+      notes: Auto Code is OpenRouter’s router built specifically for coding agents
+        and harnesses. It uses the same routing engine as the [Auto Router](https://openrouter.ai/openrouter/auto),
+        with every request treated as part of an...
+    litellm_provider: openrouter
+- model_name: typesafe/jev-router
+  litellm_params:
+    model: openai/typesafe/jev-router
+    api_base: https://openrouter.ai/api/v1
+    api_key: os.environ/OPENROUTER_API_KEY
+    input_cost_per_token: -1.0
+    output_cost_per_token: -1.0
+    max_output_tokens: 128000
+    metadata:
+      notes: Jev Router picks the best model and reasoning effort for each request,
+        balancing quality, speed, and cost. It runs on [Jev](https://openrouter.ai/~typesafe/jev-latest),
+        TypeSafe's first System One model, and adapts as your...
+    litellm_provider: openrouter
+- model_name: nvidia/switchyard
+  litellm_params:
+    model: openai/nvidia/switchyard
+    api_base: https://openrouter.ai/api/v1
+    api_key: os.environ/OPENROUTER_API_KEY
+    input_cost_per_token: -1.0
+    output_cost_per_token: -1.0
+    metadata:
+      notes: Switchyard is an open-source model routing system that switches between
+        multiple models to optimize the cost of requests. By default it will use OpenRouter
+        market data to select the most...
+    litellm_provider: openrouter
+- model_name: openrouter/auto-beta
+  litellm_params:
+    model: openai/openrouter/auto-beta
+    api_base: https://openrouter.ai/api/v1
+    api_key: os.environ/OPENROUTER_API_KEY
+    input_cost_per_token: -1.0
+    output_cost_per_token: -1.0
+    max_output_tokens: 128000
+    metadata:
+      notes: The experimental version of our Auto Router where we test new improvements.
+        Use it to get the latest and greatest version of our general purpose auto
+        router, but expect beta...
+    litellm_provider: openrouter
+- model_name: openrouter/fusion
+  litellm_params:
+    model: openai/openrouter/fusion
+    api_base: https://openrouter.ai/api/v1
+    api_key: os.environ/OPENROUTER_API_KEY
+    input_cost_per_token: -1.0
+    output_cost_per_token: -1.0
+    metadata:
+      notes: Fusion turns your prompt into a small multi-model deliberation. A panel
+        of expert models (see below) analyzes your prompt in parallel with web search
+        and web fetch enabled, then a...
+    litellm_provider: openrouter
+- model_name: openrouter/pareto-code
+  litellm_params:
+    model: openai/openrouter/pareto-code
+    api_base: https://openrouter.ai/api/v1
+    api_key: os.environ/OPENROUTER_API_KEY
+    input_cost_per_token: -1.0
+    output_cost_per_token: -1.0
+    metadata:
+      notes: The Pareto Router maintains a tiered shortlist of strong coding models,
+        ranked by [Artificial Analysis](https://artificialanalysis.ai/) coding percentiles.
+        Set min_coding_score between 0 and 1 on the [pareto-router plugin](https://openrouter.ai/docs/guides/routing/routers/pareto-router#the-min_coding_score-parameter)
+        to control how...
     litellm_provider: openrouter
 - model_name: openrouter/free
   litellm_params:
@@ -288,19 +356,6 @@ model_list:
         selects free models at random from the models available on OpenRouter. The
         router smartly filters for models that...
     litellm_provider: openrouter
-- model_name: nvidia/nemotron-3-nano-30b-a3b:free
-  litellm_params:
-    model: openai/nvidia/nemotron-3-nano-30b-a3b:free
-    api_base: https://openrouter.ai/api/v1
-    api_key: os.environ/OPENROUTER_API_KEY
-    input_cost_per_token: 0.0
-    output_cost_per_token: 0.0
-    max_input_tokens: 256000
-    metadata:
-      notes: NVIDIA Nemotron 3 Nano 30B A3B is a small language MoE model with highest
-        compute efficiency and accuracy for developers to build specialized agentic
-        AI systems. The model is fully...
-    litellm_provider: openrouter
 - model_name: openrouter/bodybuilder
   litellm_params:
     model: openai/openrouter/bodybuilder
@@ -313,414 +368,6 @@ model_list:
         request objects. Describe what you want to accomplish with AI models, and
         Body Builder will construct the appropriate API calls. Example:...
     litellm_provider: openrouter
-- model_name: nvidia/nemotron-nano-12b-v2-vl:free
-  litellm_params:
-    model: openai/nvidia/nemotron-nano-12b-v2-vl:free
-    api_base: https://openrouter.ai/api/v1
-    api_key: os.environ/OPENROUTER_API_KEY
-    input_cost_per_token: 0.0
-    output_cost_per_token: 0.0
-    max_input_tokens: 128000
-    max_output_tokens: 128000
-    metadata:
-      notes: NVIDIA Nemotron Nano 2 VL is a 12-billion-parameter open multimodal reasoning
-        model designed for video understanding and document intelligence. It introduces
-        a hybrid Transformer-Mamba architecture, combining transformer-level accuracy
-        with Mamba’s...
-    litellm_provider: openrouter
-- model_name: nvidia/nemotron-nano-9b-v2:free
-  litellm_params:
-    model: openai/nvidia/nemotron-nano-9b-v2:free
-    api_base: https://openrouter.ai/api/v1
-    api_key: os.environ/OPENROUTER_API_KEY
-    input_cost_per_token: 0.0
-    output_cost_per_token: 0.0
-    max_input_tokens: 128000
-    metadata:
-      notes: NVIDIA-Nemotron-Nano-9B-v2 is a large language model (LLM) trained from
-        scratch by NVIDIA, and designed as a unified model for both reasoning and
-        non-reasoning tasks. It responds to user queries and...
-    litellm_provider: openrouter
-- model_name: openai/gpt-oss-20b:free
-  litellm_params:
-    model: openai/gpt-oss-20b:free
-    api_base: https://openrouter.ai/api/v1
-    api_key: os.environ/OPENROUTER_API_KEY
-    input_cost_per_token: 0.0
-    output_cost_per_token: 0.0
-    max_input_tokens: 131072
-    max_output_tokens: 32768
-    metadata:
-      notes: gpt-oss-20b is an open-weight 21B parameter model released by OpenAI
-        under the Apache 2.0 license. It uses a Mixture-of-Experts (MoE) architecture
-        with 3.6B active parameters per forward pass, optimized for...
-    litellm_provider: openrouter
-- model_name: openrouter/auto
-  litellm_params:
-    model: openai/openrouter/auto
-    api_base: https://openrouter.ai/api/v1
-    api_key: os.environ/OPENROUTER_API_KEY
-    input_cost_per_token: -1.0
-    output_cost_per_token: -1.0
-    metadata:
-      notes: Your prompt will be processed by a meta-model and routed to one of dozens
-        of models (see below), optimizing for the best possible output. To see which
-        model was used,...
-    litellm_provider: openrouter
-- model_name: opencode_zen/claude-fable-5
-  litellm_params:
-    model: openai/opencode_zen/claude-fable-5
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/claude-opus-5
-  litellm_params:
-    model: openai/opencode_zen/claude-opus-5
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/claude-opus-4-8
-  litellm_params:
-    model: openai/opencode_zen/claude-opus-4-8
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/claude-opus-4-7
-  litellm_params:
-    model: openai/opencode_zen/claude-opus-4-7
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/claude-opus-4-6
-  litellm_params:
-    model: openai/opencode_zen/claude-opus-4-6
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/claude-opus-4-5
-  litellm_params:
-    model: openai/opencode_zen/claude-opus-4-5
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/claude-opus-4-1
-  litellm_params:
-    model: openai/opencode_zen/claude-opus-4-1
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/claude-sonnet-5
-  litellm_params:
-    model: openai/opencode_zen/claude-sonnet-5
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/claude-sonnet-4-6
-  litellm_params:
-    model: openai/opencode_zen/claude-sonnet-4-6
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/claude-sonnet-4-5
-  litellm_params:
-    model: openai/opencode_zen/claude-sonnet-4-5
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/claude-sonnet-4
-  litellm_params:
-    model: openai/opencode_zen/claude-sonnet-4
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/claude-haiku-4-5
-  litellm_params:
-    model: openai/opencode_zen/claude-haiku-4-5
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gemini-3.6-flash
-  litellm_params:
-    model: openai/opencode_zen/gemini-3.6-flash
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gemini-3.5-flash-lite
-  litellm_params:
-    model: openai/opencode_zen/gemini-3.5-flash-lite
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gemini-3.5-flash
-  litellm_params:
-    model: openai/opencode_zen/gemini-3.5-flash
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gemini-3.1-pro
-  litellm_params:
-    model: openai/opencode_zen/gemini-3.1-pro
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gemini-3-flash
-  litellm_params:
-    model: openai/opencode_zen/gemini-3-flash
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5.6-sol
-  litellm_params:
-    model: openai/opencode_zen/gpt-5.6-sol
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5.6-terra
-  litellm_params:
-    model: openai/opencode_zen/gpt-5.6-terra
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5.6-luna
-  litellm_params:
-    model: openai/opencode_zen/gpt-5.6-luna
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5.5
-  litellm_params:
-    model: openai/opencode_zen/gpt-5.5
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5.5-pro
-  litellm_params:
-    model: openai/opencode_zen/gpt-5.5-pro
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5.4
-  litellm_params:
-    model: openai/opencode_zen/gpt-5.4
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5.4-pro
-  litellm_params:
-    model: openai/opencode_zen/gpt-5.4-pro
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5.4-mini
-  litellm_params:
-    model: openai/opencode_zen/gpt-5.4-mini
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5.4-nano
-  litellm_params:
-    model: openai/opencode_zen/gpt-5.4-nano
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5.3-codex-spark
-  litellm_params:
-    model: openai/opencode_zen/gpt-5.3-codex-spark
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5.3-codex
-  litellm_params:
-    model: openai/opencode_zen/gpt-5.3-codex
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5.2
-  litellm_params:
-    model: openai/opencode_zen/gpt-5.2
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5.2-codex
-  litellm_params:
-    model: openai/opencode_zen/gpt-5.2-codex
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5.1
-  litellm_params:
-    model: openai/opencode_zen/gpt-5.1
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5.1-codex-max
-  litellm_params:
-    model: openai/opencode_zen/gpt-5.1-codex-max
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5.1-codex
-  litellm_params:
-    model: openai/opencode_zen/gpt-5.1-codex
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5.1-codex-mini
-  litellm_params:
-    model: openai/opencode_zen/gpt-5.1-codex-mini
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5
-  litellm_params:
-    model: openai/opencode_zen/gpt-5
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5-codex
-  litellm_params:
-    model: openai/opencode_zen/gpt-5-codex
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/gpt-5-nano
-  litellm_params:
-    model: openai/opencode_zen/gpt-5-nano
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/grok-build-0.1
-  litellm_params:
-    model: openai/opencode_zen/grok-build-0.1
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/grok-4.5
-  litellm_params:
-    model: openai/opencode_zen/grok-4.5
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/deepseek-v4-pro
-  litellm_params:
-    model: openai/opencode_zen/deepseek-v4-pro
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/deepseek-v4-flash
-  litellm_params:
-    model: openai/opencode_zen/deepseek-v4-flash
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/glm-5.2
-  litellm_params:
-    model: openai/opencode_zen/glm-5.2
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/glm-5.1
-  litellm_params:
-    model: openai/opencode_zen/glm-5.1
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/glm-5
-  litellm_params:
-    model: openai/opencode_zen/glm-5
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/minimax-m3
-  litellm_params:
-    model: openai/opencode_zen/minimax-m3
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/minimax-m2.7
-  litellm_params:
-    model: openai/opencode_zen/minimax-m2.7
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/minimax-m2.5
-  litellm_params:
-    model: openai/opencode_zen/minimax-m2.5
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/kimi-k2.7-code
-  litellm_params:
-    model: openai/opencode_zen/kimi-k2.7-code
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/kimi-k2.6
-  litellm_params:
-    model: openai/opencode_zen/kimi-k2.6
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/kimi-k2.5
-  litellm_params:
-    model: openai/opencode_zen/kimi-k2.5
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/qwen3.6-plus
-  litellm_params:
-    model: openai/opencode_zen/qwen3.6-plus
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/qwen3.5-plus
-  litellm_params:
-    model: openai/opencode_zen/qwen3.5-plus
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/big-pickle
-  litellm_params:
-    model: openai/opencode_zen/big-pickle
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/deepseek-v4-flash-free
-  litellm_params:
-    model: openai/opencode_zen/deepseek-v4-flash-free
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/mimo-v2.5-free
-  litellm_params:
-    model: openai/opencode_zen/mimo-v2.5-free
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/ling-3.0-flash-free
-  litellm_params:
-    model: openai/opencode_zen/ling-3.0-flash-free
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/nemotron-3-ultra-free
-  litellm_params:
-    model: openai/opencode_zen/nemotron-3-ultra-free
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/north-mini-code-free
-  litellm_params:
-    model: openai/opencode_zen/north-mini-code-free
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
-- model_name: opencode_zen/laguna-s-2.1-free
-  litellm_params:
-    model: openai/opencode_zen/laguna-s-2.1-free
-    api_base: https://opencode.ai/zen/v1
-    api_key: os.environ/OPENCODE_ZEN_API_KEY
-    litellm_provider: opencode_zen
 - model_name: free
   litellm_params:
     model: openai/openrouter/free
@@ -746,2163 +393,627 @@ router_settings:
   enable_pre_call_checks: true
   enable_tag_filtering: true
   fallbacks:
-  - inclusionai/ling-3.0-flash:free:
+  - inclusionai/ling-3.2-flash:free:
     - openrouter/free
     - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
+    - openrouter/google/lyria-3-clip-preview
+    - openrouter/google/lyria-3-pro-preview
+    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
+    - gemini/gemini-exp-1114
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
+    - volcengine/glm-4-7-251222
+    - zai/glm-4.7-flash
+    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+    - openrouter/google/gemma-4-26b-a4b-it:free
+    - openrouter/google/gemma-4-31b-it:free
+    - lemonade/qwen3-4b-instruct-2507-gguf
+  - baidu/ernie-5.5-flash-preview:free:
+    - openrouter/free
+    - gemini/gemini-exp-1206
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
+    - openrouter/google/lyria-3-clip-preview
+    - openrouter/google/lyria-3-pro-preview
+    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
+    - gemini/gemini-exp-1114
+    - vertex_ai-language-models/gemini-flash-experimental
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
+    - volcengine/glm-4-7-251222
+    - zai/glm-4.7-flash
+    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+    - openrouter/google/gemma-4-26b-a4b-it:free
+  - liquid/lfm-3-1.7b:free:
+    - openrouter/free
+    - gemini/gemini-exp-1206
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
+    - openrouter/google/lyria-3-clip-preview
+    - openrouter/google/lyria-3-pro-preview
+    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
+    - gemini/gemini-exp-1114
+    - vertex_ai-language-models/gemini-flash-experimental
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
+    - volcengine/glm-4-7-251222
+    - zai/glm-4.7-flash
+    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+  - particle-ai/particle-1:free:
+    - openrouter/free
+    - gemini/gemini-exp-1206
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
+    - openrouter/google/lyria-3-clip-preview
+    - openrouter/google/lyria-3-pro-preview
+    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
+    - gemini/gemini-exp-1114
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
+    - volcengine/glm-4-7-251222
+    - zai/glm-4.7-flash
+    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+    - openrouter/google/gemma-4-26b-a4b-it:free
+    - openrouter/google/gemma-4-31b-it:free
+    - lemonade/qwen3-4b-instruct-2507-gguf
+  - recursive/flint-v1.0:free:
+    - openrouter/free
+    - gemini/gemini-exp-1206
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
+    - openrouter/google/lyria-3-clip-preview
+    - openrouter/google/lyria-3-pro-preview
+    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
+    - gemini/gemini-exp-1114
+    - vertex_ai-language-models/gemini-flash-experimental
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
+    - volcengine/glm-4-7-251222
+    - zai/glm-4.7-flash
+    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+    - openrouter/google/gemma-4-26b-a4b-it:free
+  - nvidia/nemotron-3.5-super-vl:free:
+    - openrouter/free
+    - gemini/gemini-exp-1206
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - opencode_go/longcat-2.5-preview-free
+    - openrouter/google/lyria-3-clip-preview
+    - openrouter/google/lyria-3-pro-preview
+    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
+    - gemini/gemini-exp-1114
+    - vertex_ai-language-models/gemini-flash-experimental
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
+    - volcengine/glm-4-7-251222
+    - zai/glm-4.7-flash
+    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+    - openrouter/google/gemma-4-26b-a4b-it:free
+  - dots-studio/dots-3-note-preview:free:
+    - openrouter/free
+    - gemini/gemini-exp-1206
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
+    - openrouter/google/lyria-3-clip-preview
+    - openrouter/google/lyria-3-pro-preview
+    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
+    - gemini/gemini-exp-1114
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
+    - volcengine/glm-4-7-251222
+    - zai/glm-4.7-flash
+    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+    - openrouter/google/gemma-4-26b-a4b-it:free
+    - openrouter/google/gemma-4-31b-it:free
+    - lemonade/qwen3-4b-instruct-2507-gguf
+  - nvidia/nemotron-3.5-lightning:free:
+    - openrouter/free
+    - gemini/gemini-exp-1206
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
     - openrouter/google/lyria-3-clip-preview
     - openrouter/google/lyria-3-pro-preview
     - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
     - gemini/gemini-exp-1114
     - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
     - volcengine/glm-4-7-251222
     - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
     - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-    - volcengine/deepseek-v3-2-251201
-  - poolside/laguna-s-2.1:free:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-    - volcengine/deepseek-v3-2-251201
-  - openrouter/auto-beta:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - poolside/laguna-xs-2.1:free:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-    - volcengine/deepseek-v3-2-251201
-  - cohere/north-mini-code:free:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-    - volcengine/deepseek-v3-2-251201
-  - openrouter/fusion:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - nvidia/nemotron-3.5-content-safety:free:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-    - volcengine/deepseek-v3-2-251201
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+    - openrouter/google/gemma-4-26b-a4b-it:free
   - nvidia/nemotron-3-ultra-550b-a55b:free:
     - openrouter/free
     - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
     - openrouter/google/lyria-3-clip-preview
     - openrouter/google/lyria-3-pro-preview
+    - openrouter/nvidia/nemotron-3.5-lightning:free
     - gemini/gemini-exp-1114
     - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
     - volcengine/glm-4-7-251222
     - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
     - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-    - volcengine/deepseek-v3-2-251201
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+    - openrouter/google/gemma-4-26b-a4b-it:free
   - nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free:
     - openrouter/free
     - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
     - openrouter/google/lyria-3-clip-preview
     - openrouter/google/lyria-3-pro-preview
     - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
     - gemini/gemini-exp-1114
     - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
     - volcengine/glm-4-7-251222
     - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-    - volcengine/deepseek-v3-2-251201
-  - poolside/laguna-m.1:free:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-    - volcengine/deepseek-v3-2-251201
-  - openrouter/pareto-code:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+    - openrouter/google/gemma-4-26b-a4b-it:free
   - google/gemma-4-26b-a4b-it:free:
     - openrouter/free
     - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
     - openrouter/google/lyria-3-clip-preview
     - openrouter/google/lyria-3-pro-preview
     - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
     - gemini/gemini-exp-1114
     - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
     - volcengine/glm-4-7-251222
     - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
     - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
   - google/gemma-4-31b-it:free:
     - openrouter/free
     - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
     - openrouter/google/lyria-3-clip-preview
     - openrouter/google/lyria-3-pro-preview
     - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
     - gemini/gemini-exp-1114
     - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
     - volcengine/glm-4-7-251222
     - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
     - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-    - volcengine/deepseek-v3-2-251201
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
   - google/lyria-3-pro-preview:
     - openrouter/free
     - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
     - openrouter/google/lyria-3-clip-preview
     - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
     - gemini/gemini-exp-1114
     - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
     - volcengine/glm-4-7-251222
     - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
     - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-    - volcengine/deepseek-v3-2-251201
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+    - openrouter/google/gemma-4-26b-a4b-it:free
   - google/lyria-3-clip-preview:
     - openrouter/free
     - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
     - openrouter/google/lyria-3-pro-preview
     - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
     - gemini/gemini-exp-1114
     - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
     - volcengine/glm-4-7-251222
     - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
     - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-    - volcengine/deepseek-v3-2-251201
-  - nvidia/nemotron-3-super-120b-a12b:free:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-    - volcengine/deepseek-v3-2-251201
-  - openrouter/free:
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-    - volcengine/deepseek-v3-2-251201
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
     - openrouter/google/gemma-4-26b-a4b-it:free
-  - nvidia/nemotron-3-nano-30b-a3b:free:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-    - volcengine/deepseek-v3-2-251201
-  - openrouter/bodybuilder:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - nvidia/nemotron-nano-12b-v2-vl:free:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-    - volcengine/deepseek-v3-2-251201
-  - nvidia/nemotron-nano-9b-v2:free:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - openai/gpt-oss-20b:free:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
   - openrouter/auto:
     - openrouter/free
     - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
     - openrouter/google/lyria-3-clip-preview
     - openrouter/google/lyria-3-pro-preview
     - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
     - gemini/gemini-exp-1114
     - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
     - volcengine/glm-4-7-251222
     - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
     - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/claude-fable-5:
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+  - openrouter/auto-code:
     - openrouter/free
     - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
     - openrouter/google/lyria-3-clip-preview
     - openrouter/google/lyria-3-pro-preview
     - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
     - gemini/gemini-exp-1114
     - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
     - volcengine/glm-4-7-251222
     - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
     - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/claude-opus-5:
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+  - typesafe/jev-router:
     - openrouter/free
     - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
     - openrouter/google/lyria-3-clip-preview
     - openrouter/google/lyria-3-pro-preview
     - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
     - gemini/gemini-exp-1114
     - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
     - volcengine/glm-4-7-251222
     - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
     - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/claude-opus-4-8:
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+  - nvidia/switchyard:
     - openrouter/free
     - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
     - openrouter/google/lyria-3-clip-preview
     - openrouter/google/lyria-3-pro-preview
     - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
     - gemini/gemini-exp-1114
     - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
     - volcengine/glm-4-7-251222
     - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
     - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/claude-opus-4-7:
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+  - openrouter/auto-beta:
     - openrouter/free
     - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
     - openrouter/google/lyria-3-clip-preview
     - openrouter/google/lyria-3-pro-preview
     - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
     - gemini/gemini-exp-1114
     - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
     - volcengine/glm-4-7-251222
     - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
     - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/claude-opus-4-6:
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+  - openrouter/fusion:
     - openrouter/free
     - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
     - openrouter/google/lyria-3-clip-preview
     - openrouter/google/lyria-3-pro-preview
     - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
     - gemini/gemini-exp-1114
     - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
     - volcengine/glm-4-7-251222
     - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
     - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/claude-opus-4-5:
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+  - openrouter/pareto-code:
     - openrouter/free
     - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
     - openrouter/google/lyria-3-clip-preview
     - openrouter/google/lyria-3-pro-preview
     - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
     - gemini/gemini-exp-1114
     - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
     - volcengine/glm-4-7-251222
     - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
     - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+  - openrouter/free:
+    - gemini/gemini-exp-1206
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
+    - openrouter/google/lyria-3-clip-preview
+    - openrouter/google/lyria-3-pro-preview
+    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
+    - gemini/gemini-exp-1114
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
+    - volcengine/glm-4-7-251222
+    - zai/glm-4.7-flash
+    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
+    - openrouter/google/gemma-4-26b-a4b-it:free
     - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/claude-opus-4-1:
+    - lemonade/qwen3-4b-instruct-2507-gguf
+  - openrouter/bodybuilder:
     - openrouter/free
     - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
+    - openrouter/baidu/ernie-5.5-flash-preview:free
+    - openrouter/inclusionai/ling-3.2-flash:free
+    - opencode_go/beam-free
+    - openrouter/particle-ai/particle-1:free
+    - openrouter/nvidia/nemotron-3.5-super-vl:free
+    - opencode_go/longcat-2.5-preview-free
     - openrouter/google/lyria-3-clip-preview
     - openrouter/google/lyria-3-pro-preview
     - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+    - openrouter/nvidia/nemotron-3.5-lightning:free
     - gemini/gemini-exp-1114
     - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
+    - openrouter/dots-studio/dots-3-note-preview:free
+    - together_ai/prism-ml/ternary-bonsai-27b
+    - openrouter/recursive/flint-v1.0:free
+    - mistral/labs-leanstral-1-5
+    - mistral/labs-leanstral-1-5-1
     - volcengine/glm-4-7-251222
     - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
     - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/claude-sonnet-5:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/claude-sonnet-4-6:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/claude-sonnet-4-5:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/claude-sonnet-4:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/claude-haiku-4-5:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gemini-3.6-flash:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gemini-3.5-flash-lite:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gemini-3.5-flash:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gemini-3.1-pro:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gemini-3-flash:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5.6-sol:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5.6-terra:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5.6-luna:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5.5:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5.5-pro:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5.4:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5.4-pro:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5.4-mini:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5.4-nano:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5.3-codex-spark:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5.3-codex:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5.2:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5.2-codex:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5.1:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5.1-codex-max:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5.1-codex:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5.1-codex-mini:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5-codex:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/gpt-5-nano:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/grok-build-0.1:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/grok-4.5:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/deepseek-v4-pro:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/deepseek-v4-flash:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/glm-5.2:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/glm-5.1:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/glm-5:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/minimax-m3:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/minimax-m2.7:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/minimax-m2.5:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/kimi-k2.7-code:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/kimi-k2.6:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/kimi-k2.5:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/qwen3.6-plus:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/qwen3.5-plus:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/big-pickle:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/deepseek-v4-flash-free:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/mimo-v2.5-free:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/ling-3.0-flash-free:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/nemotron-3-ultra-free:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/north-mini-code-free:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
-  - opencode_zen/laguna-s-2.1-free:
-    - openrouter/free
-    - gemini/gemini-exp-1206
-    - bedrock/anthropic.claude-mythos-preview
-    - openrouter/google/lyria-3-clip-preview
-    - openrouter/google/lyria-3-pro-preview
-    - openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
-    - gemini/gemini-exp-1114
-    - vertex_ai-language-models/gemini-flash-experimental
-    - openrouter/nvidia/nemotron-3-super-120b-a12b:free
-    - volcengine/glm-4-7-251222
-    - zai/glm-4.7-flash
-    - lemonade/qwen3-4b-instruct-2507-gguf
-    - lemonade/qwen3-coder-30b-a3b-instruct-gguf
-    - openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - openrouter/cohere/north-mini-code:free
-    - openrouter/google/gemma-4-31b-it:free
-    - openrouter/inclusionai/ling-3.0-flash:free
-    - volcengine/kimi-k2-thinking-251104
-    - openrouter/poolside/laguna-m.1:free
-    - openrouter/poolside/laguna-s-2.1:free
-    - openrouter/poolside/laguna-xs-2.1:free
-    - openrouter/nvidia/nemotron-3-nano-30b-a3b:free
-    - openrouter/nvidia/nemotron-nano-12b-v2-vl:free
-    - lemonade/gpt-oss-120b-mxfp-gguf
-    - lemonade/gpt-oss-20b-mxfp4-gguf
+    - cohere_chat/north-mini-code-1.0
+    - gemini/gemma-4-26b-a4b-it
+    - gemini/gemma-4-31b-it
   - free:
+    - dots-studio/dots-3-note-preview:free
+    - inclusionai/ling-3.2-flash:free
+    - particle-ai/particle-1:free
+    - baidu/ernie-5.5-flash-preview:free
     - google/lyria-3-clip-preview
     - google/lyria-3-pro-preview
-    - nvidia/nemotron-3-super-120b-a12b:free
     - nvidia/nemotron-3-ultra-550b-a55b:free
+    - nvidia/nemotron-3.5-lightning:free
+    - nvidia/nemotron-3.5-super-vl:free
+    - recursive/flint-v1.0:free
     - nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
-    - cohere/north-mini-code:free
-    - google/gemma-4-31b-it:free
-    - inclusionai/ling-3.0-flash:free
-    - poolside/laguna-m.1:free
-    - poolside/laguna-s-2.1:free
-    - poolside/laguna-xs-2.1:free
-    - nvidia/nemotron-3.5-content-safety:free
-    - nvidia/nemotron-nano-12b-v2-vl:free
     - google/gemma-4-26b-a4b-it:free
-    - openai/gpt-oss-20b:free
-    - nvidia/nemotron-3-nano-30b-a3b:free
-    - nvidia/nemotron-nano-9b-v2:free
-    - opencode_zen/big-pickle
-    - opencode_zen/claude-fable-5
-    - opencode_zen/claude-haiku-4-5
-    - opencode_zen/claude-opus-4-1
-    - opencode_zen/claude-opus-4-5
-    - opencode_zen/claude-opus-4-6
-    - opencode_zen/claude-opus-4-7
+    - google/gemma-4-31b-it:free
+    - liquid/lfm-3-1.7b:free
+    - openrouter/auto-beta
+    - openrouter/auto-code
+    - typesafe/jev-router
+    - nvidia/switchyard
+    - openrouter/auto
+    - openrouter/bodybuilder
+    - openrouter/fusion
+    - openrouter/pareto-code
   retry_policy:
     AuthenticationErrorRetries: 3
     TimeoutErrorRetries: 3
