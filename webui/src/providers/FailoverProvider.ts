@@ -453,7 +453,7 @@ export class FailoverProvider implements ChatProvider {
       if (!modelSupportsVision(model, this.catalog)) {
         throw new ChatRouteError(
           "vision_unsupported",
-          `"${model}" can't read images. Pick a vision-capable model (filter by vision in the model explorer) or remove the attachment.`
+          `"${model}" can't read images. Choose Gemma 4 or another vision-capable route, or remove the attachment.`
         );
       }
     }

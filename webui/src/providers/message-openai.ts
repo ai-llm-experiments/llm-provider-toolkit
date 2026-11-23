@@ -1,3 +1,4 @@
+import { PUBLIC_VISION_MODEL } from "../model-selection";
 import type { Message } from "murm-ui";
 import type { CatalogEntry } from "./browser-router";
 
@@ -73,6 +74,7 @@ export function messagesToPlainText(
 }
 
 export function modelSupportsVision(modelId: string, catalog: readonly CatalogEntry[]): boolean {
+  if (modelId === PUBLIC_VISION_MODEL) return true;
   const entry = catalog.find((e) => e.id === modelId);
   return entry?.supports_vision === true;
 }

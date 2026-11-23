@@ -3,9 +3,11 @@ import type { CatalogEntry } from "./providers/browser-router";
 /** Fired when the active chat model changes (picker, explorer, etc.). */
 export const MODEL_CHANGED_EVENT = "llm-fallbacks:model-changed";
 
+export const PUBLIC_VISION_MODEL = "@cf/google/gemma-4-26b-a4b-it";
+
 const PINNED_MODELS: { id: string; label: string }[] = [
   { id: "@cf/meta/llama-3.1-8b-instruct-fast", label: "Llama 3.1 8B Instruct (Cloudflare)" },
-  { id: "@cf/google/gemma-4-26b-a4b-it", label: "Gemma 4 26B Instruct (Cloudflare)" },
+  { id: PUBLIC_VISION_MODEL, label: "Gemma 4 26B Instruct (Cloudflare, vision)" },
   { id: "free", label: "free (ranked alias)" },
   { id: "openrouter/free", label: "openrouter/free (OpenRouter router)" },
 ];
