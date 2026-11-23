@@ -68,7 +68,10 @@ export function parseMarkdownExport(text: string): Message[] {
   const messages: Message[] = [];
   for (let i = 1; i < sections.length; i += 2) {
     const roleLabel = sections[i]?.toLowerCase();
-    const content = (sections[i + 1] ?? "").trim();
+    const raw = (sections[i + 1] ?? "").trim();
+    const content = sections[0].includes("_Exported from LLM Provider Toolkit_")
+      ? raw.replace(/^\\(\\*##[ \t]+(?:User|Assistant)[ \t]*)$/gim, "$1")
+      : raw;
     if (!content) continue;
     const role = roleLabel === "user" ? "user" : "assistant";
     messages.push(newMessage(role, content));
@@ -101,7 +104,9 @@ export function importTitleFromFile(text: string, filename: string): string | un
       /* fall through */
     }
   }
+  const heading = text.match(/^# ([^\r\n]+)[\r\n]/)?.[1]?.trim();
+  if (/\.md$/i.test(filename) && heading) return heading;
   const base = filename.replace(/\.(md|json)$/i, "");
-  const slug = base.replace(/^llm-fallbacks-/, "").replace(/-\d{4}-\d{2}-\d{2}$/, "");
+  const slug = base.replace(/^(?:llm-fallbacks|llm-provider-toolkit)-/, "").replace(/-\d{4}-\d{2}-\d{2}$/, "");
   return slug.replace(/-/g, " ").trim() || undefined;
 }

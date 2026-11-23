@@ -1412,3 +1412,8 @@ body.lf-chat-page::before {
   color: #c4c4d4;
 }
 
+
+/* Conversation actions stay reachable without requiring pointer hover. */
+#chatMount .mur-sidebar-item:not(.mur-renaming) .mur-sidebar-options-btn {
+  display: flex;
+}

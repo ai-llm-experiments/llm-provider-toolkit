@@ -15,12 +15,13 @@ function messageText(message: Message): string {
 
 export function toMarkdown(messages: readonly Message[], meta?: ExportSessionMeta): string {
   const title = meta?.title?.trim() || "Chat export";
-  const lines = [`# ${title}`, "", `_Exported from llm-fallbacks_`, ""];
+  const lines = [`# ${title.replace(/[\r\n]+/g, " ")}`, "", "_Exported from LLM Provider Toolkit_", ""];
   for (const message of messages) {
     const text = messageText(message);
     if (!text) continue;
     const heading = message.role === "user" ? "## User" : "## Assistant";
-    lines.push(heading, "", text, "");
+    const escaped = text.replace(/^(\\*##[ \t]+(?:User|Assistant)[ \t]*)$/gim, "\\$1");
+    lines.push(heading, "", escaped, "");
   }
   return lines.join("\n").trimEnd() + "\n";
 }
@@ -54,7 +55,7 @@ export function slugifyTitle(title: string): string {
 export function exportFilename(ext: "md" | "json", title?: string): string {
   const date = new Date().toISOString().slice(0, 10);
   const slug = slugifyTitle(title || "chat");
-  return `llm-fallbacks-${slug}-${date}.${ext}`;
+  return `llm-provider-toolkit-${slug}-${date}.${ext}`;
 }
 
 export function downloadBlob(filename: string, content: string, mime: string): void {
@@ -67,5 +68,5 @@ export function downloadBlob(filename: string, content: string, mime: string): v
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
