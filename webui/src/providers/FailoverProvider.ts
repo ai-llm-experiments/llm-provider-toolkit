@@ -357,7 +357,7 @@ export class FailoverProvider implements ChatProvider {
       ? Math.max(0, performance.now() - this.requestStartedAt)
       : undefined;
     setLastCompletionMeta({
-      endpoint: result.route,
+      endpoint: result.endpoint,
       modelHeader: result.resolvedModel,
       fallbackCount: 0,
       trace: this.activeTrace?.snapshot(),

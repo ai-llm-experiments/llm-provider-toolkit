@@ -100,7 +100,7 @@ async function callProvider(
   signal: AbortSignal
 ): Promise<
   | { skipped: true; reason: string }
-  | { skipped?: false; res: Response; route: string }
+  | { skipped?: false; res: Response; route: string; endpoint: string }
 > {
   const parsed = parseModelId(modelId);
   if (!parsed) return { skipped: true, reason: `invalid model id: ${modelId}` };
@@ -137,7 +137,7 @@ async function callProvider(
       signal,
       redirect: "error",
     });
-    return { res, route: `browser/openrouter/${model}` };
+    return { res, route: `browser/openrouter/${model}`, endpoint: "https://openrouter.ai" };
   }
 
   const base =
@@ -158,7 +158,7 @@ async function callProvider(
     signal,
     redirect: "error",
   });
-  return { res, route: `browser/${parsed.provider}/${parsed.apiModel}` };
+  return { res, route: `browser/${parsed.provider}/${parsed.apiModel}`, endpoint: url };
 }
 
 function isSkipReason(message: string): boolean {
@@ -178,7 +178,7 @@ export async function chatWithBrowserFallback(options: {
   keys?: ApiKeys;
   signal?: AbortSignal;
   onStatus?: (msg: string) => void;
-}): Promise<{ content: string; route: string; resolvedModel?: string }> {
+}): Promise<{ content: string; route: string; endpoint: string; resolvedModel?: string }> {
   const keys = options.keys || loadKeys();
   if (!hasAnyKey(keys)) throw new Error("BROWSER_UNAVAILABLE");
 
@@ -219,7 +219,7 @@ export async function chatWithBrowserFallback(options: {
         const content = data.choices?.[0]?.message?.content || "";
         if (!content) throw new Error("Empty response from browser route");
         const resolvedModel = typeof data.model === "string" ? data.model : undefined;
-        return { content, route: result.route, resolvedModel };
+        return { content, route: result.route, endpoint: result.endpoint, resolvedModel };
       }
       const errText = await res.text();
       lastError = `${modelId}: HTTP ${res.status} — ${errText.slice(0, 160)}`;

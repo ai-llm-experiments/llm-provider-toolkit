@@ -48,10 +48,8 @@ export function TierSettingsPlugin(): ChatPlugin {
               <h3>Provider tiers</h3>
             </header>
             <p class="panel-hint">
-              Ordered routes we try for each chat. This is the <strong>omnifail stack</strong>
-              (which route to attempt).
-              Exhausting enabled tiers still fails honestly — we do not promise never-fail.
-            </p>
+              Routes are tried in the order shown below. Reorder or disable a route to change where requests go.
+          </p>
             <ol id="lf-tier-list" class="lf-tier-list">${renderTierList(draft)}</ol>
             <label>Web-UI runner URL
               <input id="lf-web-runner-url" type="url" autocomplete="off"
