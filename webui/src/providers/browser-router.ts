@@ -96,7 +96,8 @@ async function callProvider(
   modelId: string,
   body: { messages: { role: string; content: string }[]; max_tokens?: number },
   keys: ApiKeys,
-  providerUrls: Record<string, string>
+  providerUrls: Record<string, string>,
+  signal: AbortSignal
 ): Promise<
   | { skipped: true; reason: string }
   | { skipped?: false; res: Response; route: string }
@@ -130,9 +131,11 @@ async function callProvider(
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
         "HTTP-Referer": location.origin + location.pathname,
-        "X-Title": "llm-fallbacks",
+        "X-Title": "LLM Provider Toolkit",
       },
       body: JSON.stringify(payload),
+      signal,
+      redirect: "error",
     });
     return { res, route: `browser/openrouter/${model}` };
   }
@@ -152,6 +155,8 @@ async function callProvider(
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
+    signal,
+    redirect: "error",
   });
   return { res, route: `browser/${parsed.provider}/${parsed.apiModel}` };
 }
@@ -171,12 +176,15 @@ export async function chatWithBrowserFallback(options: {
   catalog: CatalogEntry[];
   providerUrls: Record<string, string>;
   keys?: ApiKeys;
+  signal?: AbortSignal;
   onStatus?: (msg: string) => void;
-}): Promise<{ content: string; route: string }> {
+}): Promise<{ content: string; route: string; resolvedModel?: string }> {
   const keys = options.keys || loadKeys();
   if (!hasAnyKey(keys)) throw new Error("BROWSER_UNAVAILABLE");
 
-  const model = options.model || "free";
+  const timeout = AbortSignal.timeout(60_000);
+  const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
+  const model = options.model;
   const chain =
     model === "free"
       ? buildFreeChain(options.catalog, keys)
@@ -190,29 +198,34 @@ export async function chatWithBrowserFallback(options: {
   let attempted = false;
 
   for (const modelId of chain) {
+    signal.throwIfAborted();
     options.onStatus?.(`browser: ${modelId}`);
     try {
       const result = await callProvider(
         modelId,
         { messages: options.messages, max_tokens: options.maxTokens },
         keys,
-        options.providerUrls
+        options.providerUrls,
+        signal
       );
       if (result.skipped) continue;
       attempted = true;
       const res = result.res;
       if (res.ok) {
         const data = (await res.json()) as {
+          model?: unknown;
           choices?: { message?: { content?: string } }[];
         };
         const content = data.choices?.[0]?.message?.content || "";
         if (!content) throw new Error("Empty response from browser route");
-        return { content, route: result.route };
+        const resolvedModel = typeof data.model === "string" ? data.model : undefined;
+        return { content, route: result.route, resolvedModel };
       }
       const errText = await res.text();
       lastError = `${modelId}: HTTP ${res.status} — ${errText.slice(0, 160)}`;
       if (!RETRYABLE.has(res.status)) throw new Error(lastError);
     } catch (err) {
+      if (signal.aborted) throw err;
       attempted = true;
       lastError = `${modelId}: ${err instanceof Error ? err.message : String(err)}`;
     }

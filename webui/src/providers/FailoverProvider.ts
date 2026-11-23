@@ -348,6 +348,7 @@ export class FailoverProvider implements ChatProvider {
       catalog: this.catalog,
       providerUrls: this.providerUrls,
       keys: userKeys,
+      signal: request.signal,
       onStatus: (s) => this.setStatus(s),
     });
     this.lastRoute = result.route;
@@ -357,6 +358,7 @@ export class FailoverProvider implements ChatProvider {
       : undefined;
     setLastCompletionMeta({
       endpoint: result.route,
+      modelHeader: result.resolvedModel,
       fallbackCount: 0,
       trace: this.activeTrace?.snapshot(),
       ttftMs: totalMs,
