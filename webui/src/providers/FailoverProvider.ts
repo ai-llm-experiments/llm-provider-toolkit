@@ -423,7 +423,8 @@ export class FailoverProvider implements ChatProvider {
     broadcastDiscoveryResults(candidates);
     // Discovery suggests links (R39) — it cannot answer the prompt itself.
     // Record a descriptive attempt so the orchestrator moves to the next tier.
-    throw new Error(
+    throw new TierSkipError(
+      "searxng_discovery",
       `SearXNG found ${candidates.length} candidate chat site${
         candidates.length === 1 ? "" : "s"
       } — see suggestions below the chat.`

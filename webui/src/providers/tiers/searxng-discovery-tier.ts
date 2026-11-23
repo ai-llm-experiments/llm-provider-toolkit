@@ -43,7 +43,8 @@ interface SearxngResult {
 
 function hostOf(url: string): string | null {
   try {
-    return new URL(url).hostname;
+    const parsed = new URL(url);
+    return parsed.username || parsed.password ? null : parsed.hostname;
   } catch {
     return null;
   }
@@ -54,17 +55,19 @@ export function filterChatCandidates(results: SearxngResult[]): DiscoveryCandida
   const seenHosts = new Set<string>();
   const candidates: DiscoveryCandidate[] = [];
   for (const result of results) {
-    const url = result.url?.trim() ?? "";
+    const url = typeof result?.url === "string" ? result.url.trim() : "";
     if (!url.startsWith("https://")) continue;
     const host = hostOf(url);
     if (!host || seenHosts.has(host) || EXCLUDED_HOST_RE.test(host)) continue;
-    const haystack = `${url} ${result.title ?? ""} ${result.content ?? ""}`;
+    const title = typeof result.title === "string" ? result.title.trim() : "";
+    const snippet = typeof result.content === "string" ? result.content.trim() : "";
+    const haystack = `${url} ${title} ${snippet}`;
     if (!CHAT_HINT_RE.test(haystack)) continue;
     seenHosts.add(host);
     candidates.push({
       url,
-      title: result.title?.trim() || host,
-      snippet: (result.content ?? "").trim().slice(0, 200),
+      title: title || host,
+      snippet: snippet.slice(0, 200),
     });
     if (candidates.length >= MAX_CANDIDATES) break;
   }
@@ -85,12 +88,14 @@ export async function searchFreeChatCandidates(options: {
   const query = options.query?.trim() || DEFAULT_DISCOVERY_QUERY;
   const doFetch = options.fetchImpl ?? fetch;
   const url = discoverySearchUrl(options.searxngUrl, query);
+  const timeout = AbortSignal.timeout(12_000);
+  const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
 
   let res: Response;
   try {
     res = await doFetch(url, {
       headers: { Accept: "application/json" },
-      signal: options.signal,
+      signal,
     });
   } catch (err) {
     if (options.signal?.aborted) throw err;
@@ -113,7 +118,10 @@ export async function searchFreeChatCandidates(options: {
     );
   }
 
-  const candidates = filterChatCandidates(parsed.results ?? []);
+  if (!Array.isArray(parsed?.results)) {
+    throw new DiscoveryUnavailableError(options.searxngUrl, "JSON response is missing a results array");
+  }
+  const candidates = filterChatCandidates(parsed.results);
   if (candidates.length === 0) {
     throw new DiscoveryEmptyError(query);
   }
