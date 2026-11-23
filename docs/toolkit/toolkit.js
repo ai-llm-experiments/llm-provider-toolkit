@@ -16,7 +16,8 @@ let endpoints = {};
 const providerRoutes = new Map();
 let modelCounts = new Map();
 let page = 0;
-const price = (value) => Number.isFinite(value) ? money.format(value * 1e6) : "—";
+const isKnownNumber = (value) => Number.isFinite(value) && value >= 0;
+const price = (value) => isKnownNumber(value) ? money.format(value * 1e6) : "—";
 
 function cell(row, value) {
   const target = row.insertCell();
@@ -37,7 +38,7 @@ function render() {
     (!capability || model[capability] === true));
   if (key !== "name") {
     filtered.sort((a, b) => {
-      const score = (item) => Number.isFinite(item[key]) ? (key === "max_input_tokens" ? -item[key] : item[key]) : Infinity;
+      const score = (item) => isKnownNumber(item[key]) ? (key === "max_input_tokens" ? -item[key] : item[key]) : Infinity;
       return (score(a) - score(b)) || a.id.localeCompare(b.id);
     });
   }
@@ -62,7 +63,7 @@ function render() {
     raw.textContent = JSON.stringify(model.raw, null, 2);
     spec.append(summary, raw);
     for (const value of [toggle, spec, model.provider, model.mode, price(model.input_cost_per_token),
-      price(model.output_cost_per_token), Number.isFinite(model.max_input_tokens) ? number.format(model.max_input_tokens) : "—"]) cell(row, value);
+      price(model.output_cost_per_token), isKnownNumber(model.max_input_tokens) ? number.format(model.max_input_tokens) : "—"]) cell(row, value);
   }
   $("status").textContent = number.format(filtered.length) + " of " + number.format(models.length) + " models";
   $("page").textContent = pages ? (page + 1) + " / " + pages : "0 pages";
@@ -133,7 +134,7 @@ $("parse").onclick = () => {
     if (!Array.isArray(entries) || entries.some((entry) => typeof entry?.id !== "string" || !entry.id.trim())) {
       throw new Error("Expected an array of models with string IDs, or an object with a data array.");
     }
-    const numeric = (value) => (typeof value === "number" || (typeof value === "string" && value.trim())) && Number.isFinite(Number(value)) ? Number(value) : null;
+    const numeric = (value) => (typeof value === "number" || (typeof value === "string" && value.trim())) && isKnownNumber(Number(value)) ? Number(value) : null;
     $("parsed").textContent = JSON.stringify(entries.map((entry) => ({
       id: entry.id, owned_by: entry.owned_by ?? null,
       context_length: numeric(entry.context_length),
