@@ -10,10 +10,6 @@ import {
   setActiveModel,
 } from "../../model-selection";
 
-const R11_TEXT =
-  "`free` = our ranked chain; `openrouter/free` = OpenRouter meta-router";
-const RANK_HELP_URL = "https://github.com/bodecloud/llm_fallbacks#quality-scoring";
-
 export function ModelPickerPlugin(): ChatPlugin {
   let selectEl: HTMLSelectElement | null = null;
   let detailEl: HTMLElement | null = null;
@@ -23,7 +19,7 @@ export function ModelPickerPlugin(): ChatPlugin {
     const active = getActiveModel();
     const pinned = getPinnedModels().find((p) => p.id === active);
     if (pinned) {
-      detailEl.textContent = pinned.label;
+      detailEl.textContent = "Provider-managed routing option";
       return;
     }
     const entry = findCatalogEntry(active);
@@ -42,7 +38,8 @@ export function ModelPickerPlugin(): ChatPlugin {
   function populateOptions(): void {
     if (!selectEl) return;
     const active = getActiveModel();
-    selectEl.innerHTML = "";
+    selectEl.replaceChildren(new Option("Choose a model", ""));
+    selectEl.options[0].disabled = true;
     for (const pinned of getPinnedModels()) {
       const opt = document.createElement("option");
       opt.value = pinned.id;
@@ -84,8 +81,7 @@ export function ModelPickerPlugin(): ChatPlugin {
           <p id="lf-model-detail" class="lf-model-detail" aria-live="polite"></p>
         </div>
         <div class="lf-model-picker-info">
-          <p class="lf-model-picker-help">${R11_TEXT}</p>
-          <a class="lf-model-rank-link" href="${RANK_HELP_URL}" target="_blank" rel="noopener noreferrer">Why this rank?</a>
+          <a class="lf-model-rank-link" href="./#models">Browse the catalog</a>
         </div>
       `;
 
@@ -107,6 +103,7 @@ export function ModelPickerPlugin(): ChatPlugin {
     },
     destroy() {
       window.removeEventListener(MODEL_CHANGED_EVENT, syncSelect);
+      window.removeEventListener(MODEL_CHANGED_EVENT, populateOptions);
       window.removeEventListener(MODEL_CHANGED_EVENT, syncDetail);
     },
   };

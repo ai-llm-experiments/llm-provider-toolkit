@@ -12,12 +12,12 @@ export interface CompareState {
   columns: Record<CompareColumnId, CompareColumnConfig>;
 }
 
-export function defaultCompareState(activeModel = "free"): CompareState {
+export function defaultCompareState(activeModel = ""): CompareState {
   return {
     active: false,
     columns: {
-      a: { model: activeModel || "free" },
-      b: { model: "openrouter/free" },
+      a: { model: activeModel },
+      b: { model: "" },
     },
   };
 }
@@ -41,7 +41,7 @@ export function bothColumnsMetered(
   catalog: readonly CatalogEntry[],
   keys = loadKeys()
 ): boolean {
-  if (!state.active) return false;
+  if (!state.active || !state.columns.a.model || !state.columns.b.model) return false;
   return (
     columnIsMetered(state.columns.a.model, catalog, keys) &&
     columnIsMetered(state.columns.b.model, catalog, keys)

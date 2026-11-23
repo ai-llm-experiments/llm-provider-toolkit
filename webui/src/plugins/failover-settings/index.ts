@@ -64,7 +64,7 @@ export function FailoverSettingsPlugin(deps: {
             <input id="guestTokenInput" type="password" autocomplete="off" />
           </label>
           <label>Default model
-            <input id="defaultModelInput" type="text" value="free" />
+            <input id="defaultModelInput" type="text" placeholder="Optional model ID" />
           </label>
           <div id="routeStatus" class="panel-status">Route: —</div>
           <div class="panel-actions">
@@ -148,7 +148,7 @@ export function FailoverSettingsPlugin(deps: {
           );
           saveJson(STORAGE_KEYS.endpoints, endpoints);
           localStorage.setItem(STORAGE_KEYS.guestToken, guestEl.value.trim());
-          localStorage.setItem(STORAGE_KEYS.defaultModel, modelEl.value.trim() || "free");
+          localStorage.setItem(STORAGE_KEYS.defaultModel, modelEl.value.trim());
           deps.provider.updateConfig(await loadRuntimeConfig());
           deps.onConfigSaved();
           statusEl.textContent = `Saved ${endpoints.length} endpoint(s)`;
@@ -161,6 +161,11 @@ export function FailoverSettingsPlugin(deps: {
           );
           if (!endpoints.length) {
             statusEl.textContent = "No endpoints configured";
+            return;
+          }
+          const model = modelEl.value.trim();
+          if (!model) {
+            statusEl.textContent = "Enter a model ID to test the connection.";
             return;
           }
           const base = endpoints[0];
@@ -176,7 +181,7 @@ export function FailoverSettingsPlugin(deps: {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                model: "free",
+                model,
                 messages: [{ role: "user", content: "ping" }],
                 max_tokens: 8,
                 stream: false,

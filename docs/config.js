@@ -2,7 +2,7 @@
 window.LLM_FALLBACKS_CONFIG = {
   endpoints: ["https://llm-fallbacks-proxy.bocloud.workers.dev"],
   guestToken: "llm-fallbacks-public",
-  defaultModel: "free",
+  defaultModel: "",
   catalogUrl:
     "https://raw.githubusercontent.com/bodecloud/llm_fallbacks/main/configs/free_models.json",
   providerUrlsUrl:

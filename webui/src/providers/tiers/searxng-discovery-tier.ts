@@ -13,7 +13,7 @@ export interface DiscoveryCandidate {
 
 export class DiscoveryEmptyError extends Error {
   constructor(query: string) {
-    super(`SearXNG returned no candidate free chat sites for "${query}".`);
+    super(`SearXNG returned no candidate chat sites for "${query}".`);
     this.name = "DiscoveryEmptyError";
   }
 }
@@ -28,7 +28,7 @@ export class DiscoveryUnavailableError extends Error {
   }
 }
 
-export const DEFAULT_DISCOVERY_QUERY = "free AI chat online no signup";
+export const DEFAULT_DISCOVERY_QUERY = "AI chat online";
 
 const CHAT_HINT_RE = /\b(chat|gpt|assistant|llm|ai)\b/i;
 const EXCLUDED_HOST_RE =

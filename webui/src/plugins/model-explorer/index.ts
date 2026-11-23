@@ -26,9 +26,9 @@ export function ModelExplorerPlugin(deps: {
       window.registerShellPanel?.("explorer", (root) => {
         root.innerHTML = `
           <header class="panel-header">
-            <h3>Free models</h3>
+            <h3>Chat catalog</h3>
           </header>
-          <p class="panel-hint">Browse the daily-ranked free model list.</p>
+          <p class="panel-hint">Inspect model capabilities and limits.</p>
           <label>Filter type
             <select id="explorer-method">
               <option value="value">match value</option>

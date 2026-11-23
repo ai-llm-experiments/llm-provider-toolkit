@@ -18,7 +18,7 @@ export const TIER_HINTS: Record<TierId, string> = {
   web_ui:
     "Optional local companion that drives a browser chat UI. Off by default — you run it.",
   searxng_discovery:
-    "Optional self-hosted SearXNG. Suggests free chat URLs when higher tiers fail.",
+    "Optional self-hosted SearXNG. Suggests chat URLs when higher tiers fail.",
   proxy_failover:
     "Public Worker / Render endpoints from Server settings. Serves zero-config visitors.",
 };

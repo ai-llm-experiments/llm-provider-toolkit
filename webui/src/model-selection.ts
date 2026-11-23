@@ -13,17 +13,14 @@ let catalogRef: CatalogEntry[] = [];
 
 export function initModelSelection(catalog: CatalogEntry[]): void {
   catalogRef = catalog;
-  if (sessionModel === null) {
-    sessionModel = "free";
-  }
 }
 
 export function setCatalogRef(catalog: CatalogEntry[]): void {
   catalogRef = catalog;
 }
 
-/** Active model for this session; falls back to `free`. Failover panel defaultModel applies only when unset. */
-export function getActiveModel(fallbackDefault = "free"): string {
+/** Explicit model selection for this session. */
+export function getActiveModel(fallbackDefault = ""): string {
   return sessionModel ?? fallbackDefault;
 }
 

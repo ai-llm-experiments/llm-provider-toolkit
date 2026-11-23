@@ -25,16 +25,15 @@ export function readRuntimeConfig(): AppConfig {
       ? normalizeEndpoints(storedEndpoints)
       : normalizeEndpoints(cfg.endpoints || []);
 
+  const savedDefault = localStorage.getItem(STORAGE_KEYS.defaultModel) || cfg.defaultModel || "";
+
   return {
     endpoints,
     guestToken:
       localStorage.getItem(STORAGE_KEYS.guestToken) ||
       cfg.guestToken ||
       "llm-fallbacks-public",
-    defaultModel:
-      localStorage.getItem(STORAGE_KEYS.defaultModel) ||
-      cfg.defaultModel ||
-      "free",
+    defaultModel: ["free", "openrouter/free"].includes(savedDefault) ? "" : savedDefault,
     catalogUrl: cfg.catalogUrl || "",
     providerUrlsUrl: cfg.providerUrlsUrl || "",
     chatProxyUrl: cfg.chatProxyUrl,
@@ -52,9 +51,6 @@ export function seedZeroConfigFromPageConfig(): void {
 
   if (!localStorage.getItem(STORAGE_KEYS.guestToken) && cfg.guestToken) {
     localStorage.setItem(STORAGE_KEYS.guestToken, cfg.guestToken);
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.defaultModel) && cfg.defaultModel) {
-    localStorage.setItem(STORAGE_KEYS.defaultModel, cfg.defaultModel);
   }
 }
 

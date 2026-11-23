@@ -167,9 +167,7 @@ export class FailoverProvider implements ChatProvider {
 
   private resolveModel(request: ChatRequest): string {
     const fromRequest = request.options.model as string | undefined;
-    if (fromRequest) return fromRequest;
-    const sessionModel = getActiveModel(this.config.defaultModel || "free");
-    return sessionModel || this.config.defaultModel || "free";
+    return fromRequest ?? getActiveModel(this.config.defaultModel);
   }
 
   private async chatViaProxy(
@@ -428,7 +426,7 @@ export class FailoverProvider implements ChatProvider {
     if (!settings.searxngUrl) {
       throw searxngTierUnavailable();
     }
-    this.setStatus("searxng: searching for free chat sites …");
+    this.setStatus("searxng: searching for chat sites …");
     const candidates = await searchFreeChatCandidates({
       searxngUrl: settings.searxngUrl,
       signal: request.signal,
@@ -444,6 +442,8 @@ export class FailoverProvider implements ChatProvider {
   }
 
   async streamChat(request: ChatRequest, onEvent: (event: StreamEvent) => void): Promise<void> {
+    if (!this.resolveModel(request)) throw new Error("Choose a model before sending a message.");
+
     // Vision guard (R29): never silently drop attachments. If the turn carries
     // an image but the selected model is not vision-capable, block clearly and
     // point at the vision-badged models in the explorer (R30).

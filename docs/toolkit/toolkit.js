@@ -6,7 +6,8 @@ const number = new Intl.NumberFormat();
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 5 });
 let models = [];
 let endpoints = {};
-let credentials = {};
+const providerRoutes = new Map();
+let modelCounts = new Map();
 let page = 0;
 const price = (value) => Number.isFinite(value) ? money.format(value * 1e6) : "—";
 
@@ -83,10 +84,17 @@ function renderExport() {
     $("comparison").append(table);
   }
   const modelList = selection.map(({id, provider}) => {
-    const model = id.startsWith(provider + "/") ? id : provider + "/" + id;
-    const litellm_params = { model };
-    if (Object.hasOwn(endpoints, provider)) litellm_params.api_base = endpoints[provider];
-    if (Object.hasOwn(credentials, provider)) litellm_params.api_key = "os.environ/" + credentials[provider];
+    const route = providerRoutes.get(provider);
+    const unprefixed = id.startsWith(provider + "/") ? id.slice(provider.length + 1) : id;
+    const routeId = [id, unprefixed].find((key) => route && Object.hasOwn(route.model_specs, key));
+    const litellm_params = { model: id.startsWith(provider + "/") ? id : provider + "/" + id };
+    if (routeId) {
+      const key = routeId.includes("/") ? routeId : provider + "/" + routeId;
+      litellm_params.model = key.startsWith("openai/") ? key : "openai/" + key;
+      litellm_params.api_base = route.base_url;
+      if (route.api_env_key_name) litellm_params.api_key = "os.environ/" + route.api_env_key_name;
+      if (route.api_version) litellm_params.api_version = route.api_version;
+    }
     return { model_name: id, litellm_params };
   });
   $("export").textContent = modelList.length ? JSON.stringify({model_list: modelList}, null, 2) : "No models selected.";
@@ -119,9 +127,13 @@ $("parse").onclick = () => {
     }
     const numeric = (value) => (typeof value === "number" || (typeof value === "string" && value.trim())) && Number.isFinite(Number(value)) ? Number(value) : null;
     $("parsed").textContent = JSON.stringify(entries.map((entry) => ({
-      id: entry.id, context_length: numeric(entry.context_length),
+      id: entry.id, owned_by: entry.owned_by ?? null,
+      context_length: numeric(entry.context_length),
+      max_output_tokens: numeric(entry.top_provider?.max_completion_tokens),
       input_cost_per_token: numeric(entry.pricing?.prompt),
       output_cost_per_token: numeric(entry.pricing?.completion),
+      input_modalities: entry.architecture?.input_modalities ?? null,
+      output_modalities: entry.architecture?.output_modalities ?? null,
       supported_parameters: entry.supported_parameters ?? null,
     })), null, 2);
   } catch (error) {
@@ -132,8 +144,6 @@ $("parse").onclick = () => {
 for (const [file, label] of Object.entries({
   "all_models.json": "Model catalog", "custom_providers.json": "Provider configurations",
   "provider_urls.json": "Provider base URLs", "litellm_config.yaml": "Full LiteLLM config",
-  "free_models.json": "Free-tier catalog with capability scores",
-  "free_models_ids.txt": "Free-tier model IDs", "litellm_config_free.yaml": "Free-tier LiteLLM config",
 })) {
   const link = document.createElement("a");
   link.href = configRoot + file;
@@ -152,11 +162,11 @@ try {
   const [catalog, urls, providers] = await Promise.all(
     ["all_models.json", "provider_urls.json", "custom_providers.json"].map(readJson));
   endpoints = urls;
-  credentials = Object.fromEntries(providers.filter((item) => item.api_env_key_name)
-    .map((item) => [item.provider_name, item.api_env_key_name]));
+  for (const item of providers) if (item.base_url && item.model_specs) providerRoutes.set(item.provider_name, item);
   models = Object.entries(catalog).map(([id, raw]) => ({
     ...raw, id, raw, provider: raw.litellm_provider || id.split("/")[0], mode: raw.mode || "unknown",
   })).sort((a, b) => a.id.localeCompare(b.id));
+  modelCounts = models.reduce((counts, {provider}) => counts.set(provider, (counts.get(provider) ?? 0) + 1), new Map());
   for (const field of ["provider", "mode"]) {
     for (const value of [...new Set(models.map((model) => model[field]))].sort()) $(field).add(new Option(value, value));
   }
@@ -174,6 +184,7 @@ try {
     if (![...$("provider").options].some((option) => option.value === provider)) link.removeAttribute("href");
     cell(row, link);
     cell(row, endpoint);
+    cell(row, number.format(modelCounts.get(provider) ?? 0));
   }
   render();
 } catch (error) {

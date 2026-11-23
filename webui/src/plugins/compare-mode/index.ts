@@ -16,7 +16,7 @@ import {
 } from "./column-provider";
 
 function modelOptionsHtml(selected: string): string {
-  const parts: string[] = [];
+  const parts = ['<option value="" disabled>Choose a model</option>'];
   for (const pinned of getPinnedModels()) {
     parts.push(
       `<option value="${pinned.id}" ${pinned.id === selected ? "selected" : ""}>${pinned.label}</option>`
@@ -86,8 +86,8 @@ export function CompareModePlugin(deps: {
   };
 
   const paintColumnLabels = (): void => {
-    if (labelA) labelA.textContent = state.columns.a.model;
-    if (labelB) labelB.textContent = state.columns.b.model;
+    if (labelA) labelA.textContent = state.columns.a.model ? "Model selected" : "";
+    if (labelB) labelB.textContent = state.columns.b.model ? "Model selected" : "";
   };
 
   return {
@@ -142,6 +142,8 @@ export function CompareModePlugin(deps: {
       const selectB = chrome.querySelector<HTMLSelectElement>('select[data-column="b"]')!;
       selectA.innerHTML = modelOptionsHtml(state.columns.a.model);
       selectB.innerHTML = modelOptionsHtml(state.columns.b.model);
+      selectA.value = state.columns.a.model;
+      selectB.value = state.columns.b.model;
       selectA.addEventListener("change", () => {
         state.columns.a.model = selectA.value;
         paintColumnLabels();
@@ -200,6 +202,7 @@ export function CompareModePlugin(deps: {
 
           const modelA = state.columns.a.model;
           const modelB = state.columns.b.model;
+          if (!modelA || !modelB) throw new Error("Choose both models before comparing.");
           const reqA: ChatRequest = {
             ...request,
             options: { ...request.options, model: modelA },

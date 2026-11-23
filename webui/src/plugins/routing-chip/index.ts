@@ -4,7 +4,6 @@ import { TIER_LABELS } from "../tier-settings/settings";
 import type { RouteHop } from "../../providers/route-trace";
 import {
   COMPLETION_META_EVENT,
-  FREE_ALIAS_NOTE,
   formatRoutingChip,
   formatUsageBadge,
   getLastCompletionMeta,
@@ -70,7 +69,6 @@ function renderChip(root: HTMLElement, meta: CompletionMeta): void {
           ? `<ol class="lf-hop-list">${hops.map((h) => hopRow(h)).join("")}</ol>`
           : `<p class="lf-routing-empty">No hop details for this reply.</p>`
       }
-      <p class="lf-alias-note">${escapeHtml(FREE_ALIAS_NOTE)}</p>
     </div>
   `;
 

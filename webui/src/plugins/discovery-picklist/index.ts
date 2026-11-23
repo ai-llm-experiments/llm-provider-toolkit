@@ -55,7 +55,7 @@ export function DiscoveryPicklistPlugin(): ChatPlugin {
         if (!host || candidates.length === 0) return;
         host.innerHTML = `
           <div class="lf-discovery-header">
-            <span>Free chat sites found via your SearXNG (open manually — nothing is automated):</span>
+            <span>Chat sites found via your SearXNG (open manually — nothing is automated):</span>
             <button type="button" class="panel-btn panel-btn-ghost lf-discovery-dismiss" aria-label="Dismiss suggestions">×</button>
           </div>
           <ul class="lf-discovery-list">

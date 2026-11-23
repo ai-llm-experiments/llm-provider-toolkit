@@ -49,7 +49,7 @@ export function TierSettingsPlugin(): ChatPlugin {
             </header>
             <p class="panel-hint">
               Ordered routes we try for each chat. This is the <strong>omnifail stack</strong>
-              (which route to attempt), not cloud free-tier rate limits.
+              (which route to attempt).
               Exhausting enabled tiers still fails honestly — we do not promise never-fail.
             </p>
             <ol id="lf-tier-list" class="lf-tier-list">${renderTierList(draft)}</ol>
