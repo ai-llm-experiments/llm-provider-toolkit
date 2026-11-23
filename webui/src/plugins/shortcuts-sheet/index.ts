@@ -1,6 +1,5 @@
 import type { ChatPlugin } from "murm-ui";
 
-const HINT_KEY = "llm_fallbacks_shortcuts_hint_dismissed";
 
 const SHORTCUTS = [
   { keys: "Enter", action: "Send message" },
@@ -55,26 +54,6 @@ function closeModal(): void {
   if (modal) modal.hidden = true;
 }
 
-function ensureHint(): HTMLElement {
-  let hint = document.getElementById("lfShortcutsHint");
-  if (hint) return hint;
-
-  hint = document.createElement("div");
-  hint.id = "lfShortcutsHint";
-  hint.className = "lf-shortcuts-hint";
-  hint.innerHTML = `
-    <span>Tip: press <kbd>?</kbd> for keyboard shortcuts</span>
-    <button type="button" class="lf-shortcuts-hint-dismiss" aria-label="Dismiss">×</button>
-  `;
-  const mount = document.getElementById("chatMount");
-  if (mount) {
-    mount.appendChild(hint);
-  } else {
-    document.body.appendChild(hint);
-  }
-  return hint;
-}
-
 export function ShortcutsSheetPlugin(): ChatPlugin {
   return {
     name: "shortcuts-sheet",
@@ -99,15 +78,6 @@ export function ShortcutsSheetPlugin(): ChatPlugin {
           openModal();
         }
       });
-
-      if (localStorage.getItem(HINT_KEY) !== "1") {
-        const hint = ensureHint();
-        hint.hidden = false;
-        hint.querySelector(".lf-shortcuts-hint-dismiss")?.addEventListener("click", () => {
-          hint.hidden = true;
-          localStorage.setItem(HINT_KEY, "1");
-        });
-      }
 
       const footerLink = document.createElement("button");
       footerLink.type = "button";
