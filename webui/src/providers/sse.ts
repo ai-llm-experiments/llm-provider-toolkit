@@ -248,6 +248,8 @@ export async function emitOpenAiSseAsStreamEvents(
     }
   });
 
+  if (!messageStarted) throw new Error("The selected route returned no response content.");
+
   if (!finishEmitted) {
     onEvent({ type: "finish", reason: "stop" });
   }

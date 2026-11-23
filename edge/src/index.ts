@@ -209,17 +209,17 @@ export default {
     }
     body.stream = body.stream ?? false;
 
-    const directWorkersAI = body.model === workersAIModel(env);
+    const directWorkersAI = body.model === workersAIModel(env) || body.model === "@cf/google/gemma-4-26b-a4b-it";
     if (!directWorkersAI && !isModelAllowed(body.model, env)) {
       return jsonError(`Model not allowlisted: ${body.model}`, 400, origin, allowed);
     }
 
     const upstream = directWorkersAI
-      ? await (body.stream ? callWorkersAIStream(body, env, origin, allowed) : callWorkersAI(body, env))
+      ? await (body.stream ? callWorkersAIStream(body, env, origin, allowed, body.model) : callWorkersAI(body, env, body.model))
       : await chatWithFallback(body, env, origin, allowed);
 
     const headers = new Headers(upstream.headers);
-    if (directWorkersAI && upstream.ok) headers.set("x-litellm-model-name", workersAIModel(env));
+    if (directWorkersAI && upstream.ok) headers.set("x-litellm-model-name", body.model);
     try {
       headers.set("x-llm-fallbacks-endpoint", new URL(request.url).hostname);
     } catch {

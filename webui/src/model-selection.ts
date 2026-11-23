@@ -5,6 +5,7 @@ export const MODEL_CHANGED_EVENT = "llm-fallbacks:model-changed";
 
 const PINNED_MODELS: { id: string; label: string }[] = [
   { id: "@cf/meta/llama-3.1-8b-instruct-fast", label: "Llama 3.1 8B Instruct (Cloudflare)" },
+  { id: "@cf/google/gemma-4-26b-a4b-it", label: "Gemma 4 26B Instruct (Cloudflare)" },
   { id: "free", label: "free (ranked alias)" },
   { id: "openrouter/free", label: "openrouter/free (OpenRouter router)" },
 ];
@@ -61,14 +62,23 @@ export function findCatalogEntry(id: string): CatalogEntry | undefined {
 export function fillModelPicker(select: HTMLSelectElement, selected: string, limit = 50): void {
   const placeholder = new Option("Choose a model", "");
   placeholder.disabled = true;
-  const options = new Map(getPinnedModels().map(({ id, label }) => [id, label]));
+  const publicOptions = document.createElement("optgroup");
+  const catalogOptions = document.createElement("optgroup");
+  publicOptions.label = "Public demo routes";
+  catalogOptions.label = "Catalog models (may need a configured provider)";
+  const pinned = getPinnedModels();
+  const ids = new Set(pinned.map(({ id }) => id));
+  for (const { id, label } of pinned) publicOptions.append(new Option(label, id));
   for (const entry of getCatalogModels(limit)) {
-    if (!options.has(entry.id)) options.set(entry.id, modelOptionLabel(entry));
+    if (!ids.has(entry.id)) {
+      ids.add(entry.id);
+      catalogOptions.append(new Option(modelOptionLabel(entry), entry.id));
+    }
   }
-  if (selected && !options.has(selected)) {
+  if (selected && !ids.has(selected)) {
     const entry = findCatalogEntry(selected);
-    options.set(selected, entry ? modelOptionLabel(entry) : selected);
+    catalogOptions.append(new Option(entry ? modelOptionLabel(entry) : selected, selected));
   }
-  select.replaceChildren(placeholder, ...Array.from(options, ([id, label]) => new Option(label, id)));
+  select.replaceChildren(placeholder, publicOptions, catalogOptions);
   select.value = selected;
 }

@@ -7,8 +7,7 @@ export function workersAIModel(env: Env): string {
   return env.WORKERS_AI_MODEL || DEFAULT_WORKERS_AI_MODEL;
 }
 
-async function workersAIText(body: ChatBody, env: Env): Promise<string | null> {
-  const model = workersAIModel(env);
+async function workersAIText(body: ChatBody, env: Env, model: string): Promise<string | null> {
   try {
     const result = await env.AI.run(model, {
       messages: body.messages,
@@ -20,8 +19,8 @@ async function workersAIText(body: ChatBody, env: Env): Promise<string | null> {
   }
 }
 
-export async function callWorkersAI(body: ChatBody, env: Env): Promise<Response> {
-  const content = await workersAIText(body, env);
+export async function callWorkersAI(body: ChatBody, env: Env, model = workersAIModel(env)): Promise<Response> {
+  const content = await workersAIText(body, env, model);
   if (!content) {
     return new Response(JSON.stringify({ error: { message: "Empty Workers AI response" } }), {
       status: 502,
@@ -105,8 +104,8 @@ export async function callWorkersAIStream(
   env: Env,
   origin: string | null,
   allowed: string[],
+  model = workersAIModel(env),
 ): Promise<Response> {
-  const model = workersAIModel(env);
   try {
     const aiStream = await env.AI.run(model, {
       messages: body.messages,
@@ -120,7 +119,7 @@ export async function callWorkersAIStream(
     /* fall through to buffered fallback */
   }
 
-  const content = await workersAIText(body, env);
+  const content = await workersAIText(body, env, model);
   if (!content) {
     return jsonError("Workers AI failed", 502, origin, allowed);
   }
