@@ -361,7 +361,7 @@ Compare before runner so the demo ships multimodal + side-by-side without requir
 ## Sources
 
 - [Wave 4B requirements](../brainstorms/2026-07-25-chat-ui-wave4b-differentiation-requirements.md)
-- [STRATEGY.md](../../STRATEGY.md) — best-effort HA; optional companions; no agent-gateway identity
+- [STRATEGY.md](https://github.com/ai-llm-experiments/llm-provider-toolkit/blob/main/STRATEGY.md) — best-effort HA; optional companions; no agent-gateway identity
 - murm-ui `AttachmentPlugin` — `webui/node_modules/murm-ui/dist/plugins/attachment/`
 - WIP scaffold — `webui/src/providers/tiers/`, `webui/src/providers/FailoverProvider.ts`
 - Learnings — `docs/solutions/integration-issues/workers-ai-proxy-fallback-and-model-chain.md`, `docs/solutions/tooling-decisions/murm-ui-streaming-plaintext-tail-patch.md`
