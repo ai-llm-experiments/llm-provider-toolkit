@@ -39,7 +39,7 @@ jobs:
         env:
           APP_VERSION: ${{ github.sha }}
         run: |
-          APP_VERSION="${GITHUB_SHA::7}-$(date +%s)"
+          export APP_VERSION="${GITHUB_SHA::7}-$(date +%s)"
           echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
           cd webui && npm ci && npm run build
 
@@ -75,10 +75,10 @@ jobs:
           cfg = {
               "endpoints": endpoints,
               "guestToken": guest_token,
-              "defaultModel": "free",
-              "catalogUrl": "https://raw.githubusercontent.com/bodecloud/llm_fallbacks/main/configs/free_models.json",
-              "providerUrlsUrl": "https://raw.githubusercontent.com/bodecloud/llm_fallbacks/main/configs/provider_urls.json",
-              "chatProxyUrl": "https://raw.githubusercontent.com/bodecloud/llm_fallbacks/main/configs/chat_proxy.json",
+              "defaultModel": "",
+              "catalogUrl": "https://raw.githubusercontent.com/ai-llm-experiments/llm-provider-toolkit/main/configs/free_models.json",
+              "providerUrlsUrl": "https://raw.githubusercontent.com/ai-llm-experiments/llm-provider-toolkit/main/configs/provider_urls.json",
+              "chatProxyUrl": "https://raw.githubusercontent.com/ai-llm-experiments/llm-provider-toolkit/main/configs/chat_proxy.json",
               "maxTokens": 512,
               "appVersion": os.environ.get("APP_VERSION", ""),
           }
@@ -123,7 +123,7 @@ jobs:
 
       - name: Run Pages chat e2e (mocked routes on live site)
         env:
-          PAGES_BASE_URL: https://bodencrouch.github.io/llm_fallbacks/
+          PAGES_BASE_URL: https://ai-llm-experiments.github.io/llm-provider-toolkit/chat/
         run: |
           cd webui && npm ci && npm run build
           cd ..
@@ -131,7 +131,7 @@ jobs:
 
       - name: Run live Pages chat e2e (real proxy)
         env:
-          PAGES_BASE_URL: https://bodencrouch.github.io/llm_fallbacks/
+          PAGES_BASE_URL: https://ai-llm-experiments.github.io/llm-provider-toolkit/chat/
         run: npx playwright test tests/e2e/pages-chat-live.spec.ts tests/e2e/pages-chat-zero-config.spec.ts
 
       - uses: actions/upload-artifact@v4
