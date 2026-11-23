@@ -183,39 +183,29 @@ export function CompareModePlugin(deps: {
           const modelA = state.columns.a.model;
           const modelB = state.columns.b.model;
           if (!modelA || !modelB) throw new Error("Choose both models before comparing.");
-          const reqA: ChatRequest = {
-            ...request,
-            options: { ...request.options, model: modelA },
-          };
-          const reqB: ChatRequest = {
-            ...request,
-            options: { ...request.options, model: modelB },
-          };
+          const columns = [
+            { id: "a" as const, model: modelA, pane: paneA },
+            { id: "b" as const, model: modelB, pane: paneB },
+          ];
+          const failures: string[] = [];
 
-          // Sequential through onEvent so murm-ui appends two assistants in one
-          // generation (multiple message_start). setMessages cannot run while busy.
-          try {
-            await original(reqA, (event) => {
-              if (paneA) applyDeltaToPane(paneA, event);
-              onEvent(tagCompareMeta(event, "a", modelA));
-            });
-          } catch (err) {
-            if (paneA && !paneA.textContent) {
-              paneA.textContent = err instanceof Error ? err.message : String(err);
+          // Stream sequentially so each response becomes its own assistant message.
+          for (const { id, model, pane } of columns) {
+            if (request.signal.aborted) throw request.signal.reason;
+            try {
+              await original({ ...request, options: { ...request.options, model } }, (event) => {
+                if (pane) applyDeltaToPane(pane, event);
+                onEvent(tagCompareMeta(event, id, model));
+              });
+            } catch (error) {
+              if (request.signal.aborted) throw error;
+              const message = error instanceof Error ? error.message : String(error);
+              if (pane) pane.append(document.createTextNode((pane.textContent ? "\n\n" : "") + message));
+              failures.push(message);
             }
-            throw err;
           }
-
-          try {
-            await original(reqB, (event) => {
-              if (paneB) applyDeltaToPane(paneB, event);
-              onEvent(tagCompareMeta(event, "b", modelB));
-            });
-          } catch (err) {
-            if (paneB && !paneB.textContent) {
-              paneB.textContent = err instanceof Error ? err.message : String(err);
-            }
-            // Column B failure must not erase column A's history message.
+          if (failures.length === columns.length) {
+            throw new Error("Neither model returned a reply. " + failures.join(" / "));
           }
         };
       }
