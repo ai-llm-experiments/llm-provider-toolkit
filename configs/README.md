@@ -88,7 +88,7 @@ Bootstrap is three-layer: Pages CI writes `docs/config.js`, the browser fetches 
 
 LiteLLM proxy configs for library consumers and raw URL fetchers.
 
-**Library artifact (default):** includes the `free` alias, random `master_key`, localhost Redis/Postgres placeholders.
+**Library artifact (default):** includes the `free` alias and references `LITELLM_MASTER_KEY` and `DATABASE_URL` at runtime. Set these environment variables for your deployment.
 
 ```bash
 litellm --config configs/litellm_config_free.yaml

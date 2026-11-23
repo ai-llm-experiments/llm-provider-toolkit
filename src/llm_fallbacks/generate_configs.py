@@ -22,7 +22,6 @@ import importlib.util
 import json
 import logging
 import os
-import uuid
 
 from pathlib import Path
 from typing import Any
@@ -233,7 +232,7 @@ def _litellm_config_base(*, deploy_mode: bool = False) -> LiteLLMYAMLConfig:
             "type": "redis",
         },
         "general_settings": {
-            "master_key": f"sk-{uuid.uuid4().hex}",
+            "master_key": "os.environ/LITELLM_MASTER_KEY",
             "alerting": ["slack", "email"],
             "proxy_batch_write_at": 60,
             "database_connection_pool_limit": 10,
@@ -241,7 +240,7 @@ def _litellm_config_base(*, deploy_mode: bool = False) -> LiteLLMYAMLConfig:
             "allow_requests_on_db_unavailable": True,
             "allowed_routes": [],
             "background_health_checks": True,
-            "database_url": f"postgresql://postgres:{os.environ.get('POSTGRES_PASSWORD')}@localhost:5432/postgres",
+            "database_url": "os.environ/DATABASE_URL",
             "disable_adding_master_key_hash_to_db": False,
             "disable_master_key_return": False,
             "disable_reset_budget": False,

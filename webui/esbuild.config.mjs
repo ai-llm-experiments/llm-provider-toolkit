@@ -24,6 +24,12 @@ function writeIndexHtml() {
   const chatDir = join(docsDir, "chat");
   mkdirSync(chatDir, { recursive: true });
   writeFileSync(join(chatDir, "index.html"), html);
+  const workbenchPath = join(docsDir, "index.html");
+  const workbench = readFileSync(workbenchPath, "utf8");
+  writeFileSync(workbenchPath, workbench.replace(
+    /("\.\/toolkit\/toolkit\.(?:js|css))(?:\?v=[^"]*)?"/g,
+    (_, asset) => `${asset}?v=${appVersion}"`,
+  ));
 
 }
 

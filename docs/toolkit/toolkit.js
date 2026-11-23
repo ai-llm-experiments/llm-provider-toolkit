@@ -114,14 +114,15 @@ $("filters").onsubmit = (event) => event.preventDefault();
 $("prev").onclick = () => { page--; render(); };
 $("next").onclick = () => { page++; render(); };
 $("clear").onclick = () => { selected.clear(); render(); renderExport(); };
-$("download").onclick = () => {
-  const url = URL.createObjectURL(new Blob([$("export").textContent], { type: "application/yaml" }));
+function downloadYaml(name, text) {
+  const url = URL.createObjectURL(new Blob([text], { type: "application/yaml" }));
   const link = document.createElement("a");
   link.href = url;
-  link.download = "litellm-selection.yaml";
+  link.download = name;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-};
+}
+$("download").onclick = () => downloadYaml("litellm-selection.yaml", $("export").textContent);
 $("sample").onclick = () => {
   $("payload").value = JSON.stringify({data: [{id: "example/chat-model", context_length: 32768, pricing: {prompt: "0.000001", completion: "0.000003"}}]}, null, 2);
 };
@@ -150,7 +151,7 @@ $("parse").onclick = () => {
 
 for (const [file, label] of Object.entries({
   "all_models.json": "Model catalog", "custom_providers.json": "Provider configurations",
-  "provider_urls.json": "Provider base URLs", "litellm_config.yaml": "Full LiteLLM config",
+  "provider_urls.json": "Provider base URLs",
 })) {
   const link = document.createElement("a");
   link.href = configRoot + file;
@@ -158,6 +159,26 @@ for (const [file, label] of Object.entries({
   $("artifacts").append(document.createElement("li"));
   $("artifacts").lastElementChild.append(link);
 }
+
+$("download-template").onclick = async () => {
+  const button = $("download-template");
+  button.disabled = true;
+  $("template-status").textContent = "Preparing template…";
+  try {
+    const response = await fetch(configRoot + "litellm_config.yaml");
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    const config = await response.text();
+    const template = config
+      .replace(/^([ ]{2}master_key:).*$/gm, "$1 os.environ/LITELLM_MASTER_KEY")
+      .replace(/^([ ]{2}database_url:).*$/gm, "$1 os.environ/DATABASE_URL");
+    downloadYaml("litellm-config-template.yaml", template);
+    $("template-status").textContent = "Set LITELLM_MASTER_KEY and DATABASE_URL before running the full template.";
+  } catch (error) {
+    $("template-status").textContent = "Template unavailable (" + error.message + "). Try again.";
+  } finally {
+    button.disabled = false;
+  }
+};
 
 async function readJson(file) {
   const response = await fetch(configRoot + file);
