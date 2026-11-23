@@ -1,5 +1,6 @@
 import type { ChatPlugin, Message } from "murm-ui";
 import type { ChatEngine } from "murm-ui";
+import { messageHasImage } from "../../providers/message-openai";
 
 function extractText(msg: Message): string {
   return msg.blocks
@@ -28,13 +29,44 @@ const ICON_EDIT = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" s
 export function MessageActionsPlugin(): ChatPlugin {
   let engine: ChatEngine | null = null;
   let root: HTMLElement | null = null;
+  let editDialog: HTMLDialogElement | null = null;
+  let editText: HTMLTextAreaElement | null = null;
+  let target: Message | null = null;
+  let restoreStop: (() => void) | null = null;
 
   return {
     name: "message-actions",
     onMount(ctx) {
       engine = ctx.engine;
       root = ctx.container;
+      const dialog = document.createElement("dialog");
+      dialog.className = "lf-chat-dialog";
+      dialog.setAttribute("aria-labelledby", "lf-edit-heading");
+      dialog.innerHTML = `
+        <form method="dialog">
+          <h2 id="lf-edit-heading">Edit message</h2>
+          <label for="lf-edit-text">Message</label>
+          <textarea id="lf-edit-text" rows="5" autofocus></textarea>
+          <p>Resending replaces messages after this one.</p>
+          <div class="lf-dialog-actions">
+            <button value="cancel">Cancel</button>
+            <button value="resend">Resend</button>
+          </div>
+        </form>
+      `;
+      document.body.append(dialog);
+      editDialog = dialog;
+      editText = dialog.querySelector("textarea");
+      dialog.addEventListener("close", () => {
+        const message = target;
+        const text = editText?.value.trim() ?? "";
+        target = null;
+        if (!message || dialog.returnValue !== "resend" || !engine || engine.isBusy) return;
+        if (!text && !messageHasImage(message)) return;
+        if (text !== extractText(message).trim()) engine.editAndResubmit(message.id, text);
+      });
       const origStop = ctx.engine.stopGeneration.bind(ctx.engine);
+      restoreStop = () => { ctx.engine.stopGeneration = origStop; };
       ctx.engine.stopGeneration = async () => {
         const generatingId = ctx.engine.state.generatingMessageId;
         let partialText = "";
@@ -80,7 +112,7 @@ export function MessageActionsPlugin(): ChatPlugin {
               const userMsg = findUserForAssistant(engine, message);
               if (!userMsg) return;
               const text = extractText(userMsg);
-              if (!text.trim()) return;
+              if (!text.trim() && !messageHasImage(userMsg)) return;
               engine.editAndResubmit(userMsg.id, text);
             },
           },
@@ -94,17 +126,24 @@ export function MessageActionsPlugin(): ChatPlugin {
             title: "Edit message",
             iconHtml: ICON_EDIT,
             onClick: ({ message }) => {
-              if (!engine || engine.isBusy) return;
-              const current = extractText(message);
-              const next = window.prompt("Edit your message:", current);
-              if (next === null || next.trim() === current.trim()) return;
-              engine.editAndResubmit(message.id, next.trim());
+              if (!engine || engine.isBusy || !editDialog || !editText) return;
+              target = message;
+              editDialog.returnValue = "cancel";
+              editText.value = extractText(message);
+              editDialog.showModal();
             },
           },
         ];
       }
 
       return [];
+    },
+    destroy() {
+      restoreStop?.();
+      editDialog?.remove();
+      target = null;
+      engine = null;
+      root = null;
     },
   };
 }

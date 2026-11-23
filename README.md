@@ -116,28 +116,11 @@ Each free model in `free_models.json` has a `quality_score` (0–100) from a det
 | PDF input | 3 | PDF support |
 | Assistant prefill | 3 | Assistant prefill |
 
-### Free providers we track
+### Provider endpoints and pricing
 
-We track 20+ free-tier providers. **Check each provider's site for current limits** — quotas change often.
+Use the [provider workbench](https://ai-llm-experiments.github.io/llm-provider-toolkit/#providers) or the generated [endpoint inventory](configs/provider_urls.json) to find API base URLs. The [model catalog](configs/all_models.json) contains the pricing and capabilities published in the latest generated snapshot. Check the provider's own pricing, quota, and account requirements before relying on that data in production.
 
-| Provider | Free tier (approx.) | Sign-up |
-|----------|---------------------|---------|
-| [OpenRouter](https://openrouter.ai) | 50 req/day, 24+ free models | No card |
-| [Groq](https://console.groq.com) | 30–60 RPM, Llama 3.3 70B | No card |
-| [Cerebras](https://cloud.cerebras.ai) | 30 RPM, 1M tokens/day | No card |
-| [Google AI Studio](https://aistudio.google.com) | 250K TPM, Gemini | No card |
-| [Mistral](https://console.mistral.ai) | 1B tokens/month | Phone verify |
-| [DeepSeek](https://platform.deepseek.com) | V3, R1 | No card |
-| [Together AI](https://api.together.xyz) | $5 credits | No card |
-| [Fireworks AI](https://fireworks.ai) | 10 RPM free tier | No card |
-| [SambaNova](https://cloud.sambanova.ai) | $5 credits | No card |
-| [NVIDIA NIM](https://build.nvidia.com) | 40 RPM, 1K credits | No card |
-| [Cohere](https://cohere.com) | 1K req/month | No card |
-| [GitHub Models](https://docs.github.com/en/github-models) | 50–150 req/day | GitHub account |
-| [HuggingFace](https://huggingface.co) | 300+ models | No card |
-| + Novita, Hyperbolic, Nebius, GLHF, Featherless, Chutes, Completions.me | | |
-
-Set provider API keys as repo secrets to enrich the daily model list. The generator works without keys using LiteLLM's public registry plus OpenRouter when configured.
+Set provider API keys as repo secrets to enrich the daily model list. The generator also works from LiteLLM's public registry and can supplement it with OpenRouter metadata when configured.
 
 ## Generate configs locally
 

@@ -1418,7 +1418,7 @@ body.lf-chat-page::before {
   display: flex;
 }
 
-#session-link-dialog {
+.lf-chat-dialog {
   width: min(32rem, calc(100% - 2rem));
   border: 1px solid #695086;
   border-radius: .75rem;
@@ -1426,8 +1426,9 @@ body.lf-chat-page::before {
   color: #f4efff;
   background: #1b1528;
 }
-#session-link-dialog::backdrop { background: rgb(0 0 0 / 70%); }
-#session-link-dialog form { display: grid; gap: .65rem; }
-#session-link-dialog h2, #session-link-dialog p { margin: 0; }
-#session-link-value { width: 100%; font: inherit; }
-#session-link-dialog button { justify-self: end; }
+.lf-chat-dialog::backdrop { background: rgb(0 0 0 / 70%); }
+.lf-chat-dialog form { display: grid; gap: .65rem; }
+.lf-chat-dialog h2, .lf-chat-dialog p { margin: 0; }
+.lf-chat-dialog input, .lf-chat-dialog textarea { width: 100%; font: inherit; }
+.lf-chat-dialog button { justify-self: end; }
+.lf-dialog-actions { display: flex; justify-content: flex-end; gap: .65rem; }

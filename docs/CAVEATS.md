@@ -27,7 +27,7 @@ Honest limits for the public chat demo and the Python library.
 |-------|----------------------|
 | **Import side effects** | Setting `OPENROUTER_API_KEY` (even to `dummy`) triggers live fetches at import. Use `OPENROUTER_API_KEY=dummy` in tests. |
 | **Cloudflare deploy token** | Deploy Proxies needs Workers Scripts Edit. Auth error **10000** means regenerate the token — see [workflow runbook](solutions/workflow-issues/github-pages-webui-deploy-and-secrets.md). |
-| **Provider limits** | The README provider table is a snapshot. Verify limits on each provider's official docs before production use. |
+| **Provider limits** | The model catalog is a generated snapshot. Verify pricing and limits with the provider before production use. |
 
 ## Evidence labels
 
