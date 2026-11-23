@@ -12,7 +12,7 @@ prior_plan: docs/plans/2026-07-24-006-feat-chat-ui-wave3-catalog-export-plan.md
 
 # feat: Chat UI Wave 4 — streaming polish & UX micro
 
-> **Origin:** [Wave 4 polish brainstorm](../brainstorms/2026-07-25-chat-ui-wave4-polish-requirements.md) — closes original **R5** carryover plus session import and UX micro. Waves 1–3 in PRs [#13](https://github.com/bodecloud/llm_fallbacks/pull/13) / [#14](https://github.com/bodecloud/llm_fallbacks/pull/14).
+> **Origin:** [Wave 4 polish brainstorm](../brainstorms/2026-07-25-chat-ui-wave4-polish-requirements.md) — closes original **R5** carryover plus session import and UX micro. Continues the previous three chat UI waves.
 
 ## Summary
 

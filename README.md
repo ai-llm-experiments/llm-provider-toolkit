@@ -133,7 +133,7 @@ We track 20+ free-tier providers. **Check each provider's site for current limit
 | [SambaNova](https://cloud.sambanova.ai) | $5 credits | No card |
 | [NVIDIA NIM](https://build.nvidia.com) | 40 RPM, 1K credits | No card |
 | [Cohere](https://cohere.com) | 1K req/month | No card |
-| [GitHub Models](https://github.com/marketplace/models) | 50–150 req/day | GitHub account |
+| [GitHub Models](https://docs.github.com/en/github-models) | 50–150 req/day | GitHub account |
 | [HuggingFace](https://huggingface.co) | 300+ models | No card |
 | + Novita, Hyperbolic, Nebius, GLHF, Featherless, Chutes, Completions.me | | |
 

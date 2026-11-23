@@ -3,10 +3,9 @@ import { catalogSummaryLine } from "../../catalog-display";
 import {
   findCatalogEntry,
   getActiveModel,
-  getCatalogModels,
+  fillModelPicker,
   getPinnedModels,
   MODEL_CHANGED_EVENT,
-  modelOptionLabel,
   setActiveModel,
 } from "../../model-selection";
 
@@ -26,34 +25,8 @@ export function ModelPickerPlugin(): ChatPlugin {
     detailEl.textContent = entry ? catalogSummaryLine(entry) : active;
   }
 
-  function syncSelect(): void {
-    if (!selectEl) return;
-    const active = getActiveModel();
-    if (selectEl.value !== active) {
-      const opt = selectEl.querySelector<HTMLOptionElement>(`option[value="${CSS.escape(active)}"]`);
-      if (opt) selectEl.value = active;
-    }
-  }
-
   function populateOptions(): void {
-    if (!selectEl) return;
-    const active = getActiveModel();
-    selectEl.replaceChildren(new Option("Choose a model", ""));
-    selectEl.options[0].disabled = true;
-    for (const pinned of getPinnedModels()) {
-      const opt = document.createElement("option");
-      opt.value = pinned.id;
-      opt.textContent = pinned.label;
-      selectEl.appendChild(opt);
-    }
-    for (const entry of getCatalogModels()) {
-      if (getPinnedModels().some((p) => p.id === entry.id)) continue;
-      const opt = document.createElement("option");
-      opt.value = entry.id;
-      opt.textContent = modelOptionLabel(entry);
-      selectEl.appendChild(opt);
-    }
-    selectEl.value = active;
+    if (selectEl) fillModelPicker(selectEl, getActiveModel());
   }
 
   return {
@@ -97,12 +70,10 @@ export function ModelPickerPlugin(): ChatPlugin {
         syncDetail();
       });
 
-      window.addEventListener(MODEL_CHANGED_EVENT, syncSelect);
       window.addEventListener(MODEL_CHANGED_EVENT, populateOptions);
       window.addEventListener(MODEL_CHANGED_EVENT, syncDetail);
     },
     destroy() {
-      window.removeEventListener(MODEL_CHANGED_EVENT, syncSelect);
       window.removeEventListener(MODEL_CHANGED_EVENT, populateOptions);
       window.removeEventListener(MODEL_CHANGED_EVENT, syncDetail);
     },

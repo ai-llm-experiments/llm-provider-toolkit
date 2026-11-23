@@ -55,3 +55,20 @@ export function modelOptionLabel(entry: CatalogEntry): string {
 export function findCatalogEntry(id: string): CatalogEntry | undefined {
   return catalogRef.find((entry) => entry.id === id);
 }
+
+
+/** Populate a picker without parsing catalog or user-provided strings as markup. */
+export function fillModelPicker(select: HTMLSelectElement, selected: string, limit = 50): void {
+  const placeholder = new Option("Choose a model", "");
+  placeholder.disabled = true;
+  const options = new Map(getPinnedModels().map(({ id, label }) => [id, label]));
+  for (const entry of getCatalogModels(limit)) {
+    if (!options.has(entry.id)) options.set(entry.id, modelOptionLabel(entry));
+  }
+  if (selected && !options.has(selected)) {
+    const entry = findCatalogEntry(selected);
+    options.set(selected, entry ? modelOptionLabel(entry) : selected);
+  }
+  select.replaceChildren(placeholder, ...Array.from(options, ([id, label]) => new Option(label, id)));
+  select.value = selected;
+}

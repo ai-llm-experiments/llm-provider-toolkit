@@ -1,9 +1,7 @@
 import type { ChatPlugin, ChatRequest, StreamEvent } from "murm-ui";
 import {
   getActiveModel,
-  getCatalogModels,
-  getPinnedModels,
-  modelOptionLabel,
+  fillModelPicker,
 } from "../../model-selection";
 import type { CatalogEntry } from "../../providers/browser-router";
 import type { FailoverProvider } from "../../providers/FailoverProvider";
@@ -14,22 +12,6 @@ import {
   defaultCompareState,
   type CompareState,
 } from "./column-provider";
-
-function modelOptionsHtml(selected: string): string {
-  const parts = ['<option value="" disabled>Choose a model</option>'];
-  for (const pinned of getPinnedModels()) {
-    parts.push(
-      `<option value="${pinned.id}" ${pinned.id === selected ? "selected" : ""}>${pinned.label}</option>`
-    );
-  }
-  for (const entry of getCatalogModels(40)) {
-    if (getPinnedModels().some((p) => p.id === entry.id)) continue;
-    parts.push(
-      `<option value="${entry.id}" ${entry.id === selected ? "selected" : ""}>${modelOptionLabel(entry)}</option>`
-    );
-  }
-  return parts.join("");
-}
 
 function applyDeltaToPane(pane: HTMLElement, event: StreamEvent): void {
   if (event.type === "message_start") {
@@ -140,10 +122,8 @@ export function CompareModePlugin(deps: {
 
       const selectA = chrome.querySelector<HTMLSelectElement>('select[data-column="a"]')!;
       const selectB = chrome.querySelector<HTMLSelectElement>('select[data-column="b"]')!;
-      selectA.innerHTML = modelOptionsHtml(state.columns.a.model);
-      selectB.innerHTML = modelOptionsHtml(state.columns.b.model);
-      selectA.value = state.columns.a.model;
-      selectB.value = state.columns.b.model;
+      fillModelPicker(selectA, state.columns.a.model, 40);
+      fillModelPicker(selectB, state.columns.b.model, 40);
       selectA.addEventListener("change", () => {
         state.columns.a.model = selectA.value;
         paintColumnLabels();
@@ -172,7 +152,7 @@ export function CompareModePlugin(deps: {
           state.active = checkbox.checked;
           if (state.active) {
             state.columns.a.model = selectA.value || getActiveModel();
-            selectA.value = state.columns.a.model;
+            fillModelPicker(selectA, state.columns.a.model, 40);
             paintColumnLabels();
             showStatusMessage("Compare mode on — replies appear in both columns.");
           } else {
