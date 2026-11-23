@@ -1,6 +1,6 @@
 import type { ChatPlugin } from "murm-ui";
 import {
-  COMPLETION_META_EVENT,
+  REPLY_COMPLETED_EVENT,
   type CompletionMeta,
 } from "../../providers/routing-metadata";
 import {
@@ -12,7 +12,7 @@ import {
 
 /**
  * Client-side session totals row (R60). Aggregates tokens (when exposed) and
- * wall time from COMPLETION_META_EVENT; resets on session switch.
+ * wall time from REPLY_COMPLETED_EVENT; resets on session switch.
  */
 export function SessionUsagePlugin(): ChatPlugin {
   let host: HTMLElement | null = null;
@@ -54,7 +54,7 @@ export function SessionUsagePlugin(): ChatPlugin {
         totals = accumulateSessionTotals(totals, detail);
         paint();
       };
-      window.addEventListener(COMPLETION_META_EVENT, onMeta);
+      window.addEventListener(REPLY_COMPLETED_EVENT, onMeta);
 
       ctx.engine.subscribe(
         (s) => s.currentSessionId,
@@ -67,7 +67,7 @@ export function SessionUsagePlugin(): ChatPlugin {
       );
     },
     destroy() {
-      if (onMeta) window.removeEventListener(COMPLETION_META_EVENT, onMeta);
+      if (onMeta) window.removeEventListener(REPLY_COMPLETED_EVENT, onMeta);
       host?.remove();
     },
   };

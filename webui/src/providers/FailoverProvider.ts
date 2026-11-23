@@ -21,6 +21,7 @@ import {
 } from "./message-openai";
 import { classifyHopError, RouteTrace } from "./route-trace";
 import {
+  clearLastCompletionMeta,
   getLastCompletionMeta,
   setLastCompletionMeta,
   type CompletionMeta,
@@ -457,6 +458,7 @@ export class FailoverProvider implements ChatProvider {
       }
     }
 
+    clearLastCompletionMeta();
     this.activeTrace = new RouteTrace();
     this.requestStartedAt = performance.now();
     const orchestrator = new TierOrchestrator(
@@ -485,7 +487,7 @@ export class FailoverProvider implements ChatProvider {
       // the orchestrator records the winning tier success (if it owns that hop).
       const meta = getLastCompletionMeta();
       if (meta && this.activeTrace) {
-        setLastCompletionMeta({ ...meta, trace: this.activeTrace.snapshot() });
+        setLastCompletionMeta({ ...meta, trace: this.activeTrace.snapshot() }, true);
       }
     } catch (err) {
       if (err instanceof TierOrchestratorError) {

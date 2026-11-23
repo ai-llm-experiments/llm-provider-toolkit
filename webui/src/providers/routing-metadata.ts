@@ -27,11 +27,18 @@ let lastCompletionMeta: CompletionMeta | null = null;
 
 export const COMPLETION_META_EVENT = "llm-fallbacks:completion-meta";
 
-export function setLastCompletionMeta(meta: CompletionMeta): void {
+export const REPLY_COMPLETED_EVENT = "llm-fallbacks:reply-completed";
+
+export function clearLastCompletionMeta(): void {
+  lastCompletionMeta = null;
+}
+
+export function setLastCompletionMeta(meta: CompletionMeta, completed = false): void {
   lastCompletionMeta = meta;
   window.dispatchEvent(
     new CustomEvent(COMPLETION_META_EVENT, { detail: { ...meta } })
   );
+  if (completed) window.dispatchEvent(new CustomEvent(REPLY_COMPLETED_EVENT, { detail: { ...meta } }));
 }
 
 export function getLastCompletionMeta(): CompletionMeta | null {
