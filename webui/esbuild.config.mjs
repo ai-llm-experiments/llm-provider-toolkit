@@ -23,7 +23,7 @@ function writeIndexHtml() {
   const html = template.replaceAll("__APP_VERSION__", appVersion);
   const chatDir = join(docsDir, "chat");
   mkdirSync(chatDir, { recursive: true });
-  writeFileSync(join(chatDir, "index.html"), html.replace("<head>", '<head><base href="../">'));
+  writeFileSync(join(chatDir, "index.html"), html);
 
 }
 

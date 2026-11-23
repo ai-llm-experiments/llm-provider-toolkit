@@ -1,3 +1,10 @@
+// Older chat builds could leave a session hash on the workbench URL.
+if (location.hash.startsWith("#/chat/")) {
+  const chat = new URL("./chat/", location.href);
+  chat.hash = location.hash;
+  location.replace(chat);
+}
+
 const configRoot = "https://raw.githubusercontent.com/ai-llm-experiments/llm-provider-toolkit/main/configs/";
 const $ = (id) => document.getElementById(id);
 const selected = new Set();

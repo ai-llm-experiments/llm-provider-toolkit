@@ -117,21 +117,12 @@ body.lf-chat-page::before {
 }
 
 #chatMount.mur-app-embedded .mur-main-header {
-  display: none;
+  display: flex;
+  height: var(--mur-header-height, 3rem);
 }
 
-@media (max-width: 768px) {
-  /* Embedded shell hides the header globally — restore mobile sidebar toggle only */
-  #chatMount.mur-app-embedded .mur-main-header {
-    display: flex;
-    height: var(--mur-header-height, 3rem);
-    pointer-events: none;
-  }
-
-  #chatMount.mur-app-embedded .mur-open-sidebar-btn {
-    display: inline-flex !important;
-    pointer-events: auto;
-  }
+#chatMount.mur-app-embedded .mur-open-sidebar-btn {
+  display: inline-flex !important;
 }
 
 #chatMount.mur-app-embedded .mur-chat-history {

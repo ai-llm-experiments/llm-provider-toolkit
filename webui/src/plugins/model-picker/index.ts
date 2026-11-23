@@ -54,7 +54,7 @@ export function ModelPickerPlugin(): ChatPlugin {
           <p id="lf-model-detail" class="lf-model-detail" aria-live="polite"></p>
         </div>
         <div class="lf-model-picker-info">
-          <a class="lf-model-rank-link" href="./#models">Browse the catalog</a>
+          <a class="lf-model-rank-link" href="../#models">Browse the catalog</a>
         </div>
       `;
 
